@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as PIXI from 'pixi.js';
+import { motion, AnimatePresence } from 'framer-motion';
 import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
 import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
@@ -13,9 +14,10 @@ export default function RouletteGame({ onBack }) {
   const appRef = useRef(null);
   const wheelRef = useRef(null);
   const ballRef = useRef(null);
+  const tickerFnRef = useRef(null);
 
   const [localBalance, setLocalBalance] = useState(getBalance());
-  const [betAmount, setBetAmount] = useState(0.01);
+  const [betAmount, setBetAmount] = useState(0.1);
   const [bets, setBets] = useState({});
   const [gameState, setGameState] = useState('BETTING'); // BETTING, SPINNING, RESULT
   const [countdown, setCountdown] = useState(15);
@@ -48,8 +50,9 @@ export default function RouletteGame({ onBack }) {
   }, [gameState, countdown]);
 
   useEffect(() => {
+    let app;
     const initPixi = async () => {
-      const app = new PIXI.Application();
+      app = new PIXI.Application();
       await app.init({ 
         resizeTo: canvasRef.current, 
         backgroundAlpha: 0, 
@@ -62,67 +65,67 @@ export default function RouletteGame({ onBack }) {
       
       const wheel = new PIXI.Container();
       wheel.x = app.screen.width / 2;
-      wheel.y = app.screen.height / 2 - 20; // Shift up slightly to leave room for table
+      wheel.y = app.screen.height / 2 - 20; 
       app.stage.addChild(wheel);
       wheelRef.current = wheel;
 
       // Outer rim
       const rim = new PIXI.Graphics();
-      rim.beginFill(0x0F212E);
-      rim.lineStyle(4, 0xFFD700);
-      rim.drawCircle(0, 0, wheelRadius + 20);
-      rim.endFill();
+      rim.circle(0, 0, wheelRadius + 24);
+      rim.fill(0x0F212E);
+      rim.stroke({ width: 6, color: 0x2A3F54 });
       wheel.addChild(rim);
+
+      const innerRim = new PIXI.Graphics();
+      innerRim.circle(0, 0, wheelRadius + 18);
+      innerRim.stroke({ width: 2, color: 0xFFD700, alpha: 0.8 });
+      wheel.addChild(innerRim);
 
       for (let i = 0; i < 37; i++) {
         const num = ROULETTE_SEQUENCE[i];
         const isRed = RED_NUMBERS.has(num);
-        const color = num === 0 ? 0x00E701 : isRed ? 0xED4163 : 0x1A2C38;
+        const color = num === 0 ? 0x00C001 : isRed ? 0xED4163 : 0x1A2C38;
         
         const slice = new PIXI.Graphics();
-        slice.beginFill(color);
-        slice.lineStyle(1, 0xFFFFFF, 0.2);
         slice.moveTo(0, 0);
         slice.arc(0, 0, wheelRadius, i * arc, (i + 1) * arc);
-        slice.endFill();
+        slice.fill(color);
+        slice.stroke({ width: 1, color: 0xFFFFFF, alpha: 0.15 });
         wheel.addChild(slice);
 
         const text = new PIXI.Text(num.toString(), {
           fontFamily: 'system-ui',
-          fontSize: wheelRadius * 0.1,
+          fontSize: wheelRadius * 0.12,
           fill: 0xFFFFFF,
-          fontWeight: 'bold'
+          fontWeight: '900'
         });
         text.anchor.set(0.5);
         const textAngle = i * arc + arc / 2;
-        text.x = Math.cos(textAngle) * (wheelRadius * 0.85);
-        text.y = Math.sin(textAngle) * (wheelRadius * 0.85);
+        text.x = Math.cos(textAngle) * (wheelRadius * 0.82);
+        text.y = Math.sin(textAngle) * (wheelRadius * 0.82);
         text.rotation = textAngle + Math.PI / 2;
         wheel.addChild(text);
       }
 
       // Center dome
       const center = new PIXI.Graphics();
-      center.beginFill(0x213743);
-      center.lineStyle(2, 0xFFD700);
-      center.drawCircle(0, 0, wheelRadius * 0.3);
-      center.endFill();
+      center.circle(0, 0, wheelRadius * 0.3);
+      center.fill(0x213743);
+      center.stroke({ width: 3, color: 0xFFD700 });
       wheel.addChild(center);
 
       // Pointer (at top)
       const pointer = new PIXI.Graphics();
-      pointer.beginFill(0xFFFFFF);
-      pointer.drawPolygon([-10, 0, 10, 0, 0, 20]);
-      pointer.endFill();
+      pointer.poly([-12, 0, 12, 0, 0, 24]);
+      pointer.fill(0xFFFFFF);
       pointer.x = app.screen.width / 2;
-      pointer.y = app.screen.height / 2 - 20 - wheelRadius - 20;
+      pointer.y = app.screen.height / 2 - 20 - wheelRadius - 25;
       app.stage.addChild(pointer);
 
       // Ball
       const ball = new PIXI.Graphics();
-      ball.beginFill(0xFFFFFF);
-      ball.drawCircle(0, 0, 6);
-      ball.endFill();
+      ball.circle(0, 0, 7);
+      ball.fill(0xFFFFFF);
       ball.visible = false;
       wheel.addChild(ball);
       ballRef.current = ball;
@@ -131,7 +134,10 @@ export default function RouletteGame({ onBack }) {
     initPixi();
 
     return () => {
-      if (appRef.current) appRef.current.destroy(true, { children: true });
+      if (appRef.current) {
+        if (tickerFnRef.current) appRef.current.ticker.remove(tickerFnRef.current);
+        appRef.current.destroy(true, { children: true });
+      }
     };
   }, []);
 
@@ -186,7 +192,7 @@ export default function RouletteGame({ onBack }) {
     if (totalBet > 0) {
       const newBal = subtractFromBalance(totalBet);
       if (newBal === null) {
-        setBets({}); // Clear bets if somehow insufficient
+        setBets({}); 
       } else {
         setLocalBalance(newBal);
       }
@@ -220,6 +226,8 @@ export default function RouletteGame({ onBack }) {
     const tick = () => {
       const now = performance.now();
       const t = Math.min((now - startTime) / spinDuration, 1);
+      
+      // Easing out cubic for both wheel and ball
       const easeT = 1 - Math.pow(1 - t, 3);
       
       wheel.rotation = initialWheelRot + (finalWheelRot - initialWheelRot) * easeT;
@@ -240,9 +248,10 @@ export default function RouletteGame({ onBack }) {
       ball.x = Math.cos(ballLocalAngle) * currentR;
       ball.y = Math.sin(ballLocalAngle) * currentR;
       
-      if (t < 1) {
-        app.ticker.addOnce(tick);
-      } else {
+      if (t >= 1) {
+        app.ticker.remove(tick);
+        tickerFnRef.current = null;
+        
         setGameState('RESULT');
         setResult(winNum);
         setRecentResults(prev => [winNum, ...prev].slice(0, 10));
@@ -258,21 +267,21 @@ export default function RouletteGame({ onBack }) {
             game: 'roulette',
             bet: totalBet,
             payout,
+            profit: payout - totalBet,
             result: winNum
           });
         }
       }
     };
     
-    app.ticker.addOnce(tick);
+    if (tickerFnRef.current) app.ticker.remove(tickerFnRef.current);
+    tickerFnRef.current = tick;
+    app.ticker.add(tick);
   };
 
   const placeBet = (key) => {
     if (gameState !== 'BETTING') return;
-    setBets(prev => ({
-      ...prev,
-      [key]: (prev[key] || 0) + betAmount
-    }));
+    setBets(prev => ({ ...prev, [key]: (prev[key] || 0) + betAmount }));
   };
 
   const handleClearBets = () => {
@@ -293,11 +302,15 @@ export default function RouletteGame({ onBack }) {
     const amount = bets[key];
     if (!amount) return null;
     return (
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-        <div className="bg-[#1475E1] rounded-full w-6 h-6 flex items-center justify-center border-[1.5px] border-white shadow-lg text-[8px] font-bold text-white leading-none">
-          {amount >= 1000 ? (amount/1000).toFixed(1)+'k' : amount}
+      <motion.div 
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
+      >
+        <div className="bg-[#1475E1] rounded-full w-7 h-7 flex items-center justify-center border-2 border-white shadow-[0_2px_10px_rgba(0,0,0,0.5)] text-[9px] font-black text-white leading-none">
+          {amount >= 1000 ? (amount/1000).toFixed(1)+'k' : parseFloat(amount.toFixed(2))}
         </div>
-      </div>
+      </motion.div>
     );
   };
 
@@ -305,36 +318,30 @@ export default function RouletteGame({ onBack }) {
 
   const controls = (
     <div className="flex flex-col gap-4 h-full">
-      <div className="text-center bg-[#0F212E] py-4 rounded-xl border border-white/5 shadow-inner">
-        <div className="text-sm text-[#B1BAD3] uppercase font-bold tracking-wider mb-1">
-          {gameState === 'BETTING' ? 'Place Your Bets' : gameState === 'SPINNING' ? 'No More Bets' : 'Result'}
-        </div>
-        <div className={`text-4xl font-display font-bold ${gameState === 'BETTING' && countdown <= 5 ? 'text-[#ED4163]' : 'text-white'}`}>
-          {gameState === 'BETTING' ? `00:${countdown.toString().padStart(2, '0')}` : '---'}
-        </div>
+      
+      <div className="bg-[#0F212E] rounded-xl border border-white/5 p-4 shadow-inner">
+        <BetControls betAmount={betAmount} setBetAmount={setBetAmount} disabled={gameState !== 'BETTING'} />
       </div>
 
-      <BetControls betAmount={betAmount} setBetAmount={setBetAmount} disabled={gameState !== 'BETTING'} />
-      
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         <button 
           onClick={handleClearBets}
           disabled={gameState !== 'BETTING' || Object.keys(bets).length === 0}
-          className="bg-[#213743] hover:bg-white/10 py-3 rounded-lg font-bold text-sm text-[#B1BAD3] disabled:opacity-50 transition-colors"
+          className="bg-[#213743] hover:bg-[#2A3F54] py-3.5 rounded-xl font-bold text-sm text-[#B1BAD3] hover:text-white disabled:opacity-50 transition-all shadow-inner"
         >
           Clear
         </button>
         <button 
           onClick={handleDoubleBets}
           disabled={gameState !== 'BETTING' || Object.keys(bets).length === 0}
-          className="bg-[#213743] hover:bg-white/10 py-3 rounded-lg font-bold text-sm text-[#B1BAD3] disabled:opacity-50 transition-colors"
+          className="bg-[#213743] hover:bg-[#2A3F54] py-3.5 rounded-xl font-bold text-sm text-[#B1BAD3] hover:text-white disabled:opacity-50 transition-all shadow-inner"
         >
           Double
         </button>
       </div>
-
-      <div className="mt-2 p-3 bg-[#0F212E] rounded-lg border border-white/5">
-        <div className="text-xs text-[#B1BAD3] uppercase font-bold mb-1">Total Bet</div>
+      
+      <div className="bg-[#0F212E] rounded-xl border border-white/5 p-4 shadow-inner mt-auto flex items-center justify-between">
+        <div className="text-xs text-[#B1BAD3] uppercase font-bold tracking-wider">Total Bet</div>
         <div className="text-lg font-display font-bold text-white">
           {totalBetAmount.toFixed(4)}
         </div>
@@ -344,45 +351,70 @@ export default function RouletteGame({ onBack }) {
 
   return (
     <GameLayout title="Roulette" balance={localBalance} onBack={onBack} controls={controls}>
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0F212E] to-[#1A2C38]/50 flex flex-col">
-        {/* Pixi Canvas Container */}
-        <div className="flex-1 relative min-h-[300px]" ref={canvasRef}>
-          {recentResults.length > 0 && (
-            <div className="absolute top-4 left-4 flex gap-1 z-10">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0F212E] to-[#1A2C38] flex flex-col">
+        
+        {/* Top Header info */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-full px-6 flex justify-between items-center pointer-events-none">
+          <div className="flex gap-1.5 overflow-hidden w-64 max-w-[40%]">
+            <AnimatePresence>
               {recentResults.map((r, i) => {
                 const isRed = RED_NUMBERS.has(r);
                 return (
-                  <div key={i} className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm text-white ${r === 0 ? 'bg-[#00E701]' : isRed ? 'bg-[#ED4163]' : 'bg-[#1A2C38]'}`}>
+                  <motion.div 
+                    key={`${i}-${r}`}
+                    initial={{ scale: 0, x: -20 }}
+                    animate={{ scale: 1, x: 0 }}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm text-white shadow-md border border-white/10 shrink-0 ${r === 0 ? 'bg-[#00E701]' : isRed ? 'bg-[#ED4163]' : 'bg-[#1A2C38]'}`}
+                  >
                     {r}
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
-          )}
+            </AnimatePresence>
+          </div>
           
-          {result !== null && gameState === 'RESULT' && (
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-              <span className={`text-6xl font-display font-black drop-shadow-2xl ${result === 0 ? 'text-[#00E701]' : RED_NUMBERS.has(result) ? 'text-[#ED4163]' : 'text-white'}`}>
-                {result}
-              </span>
+          <div className="flex flex-col items-center pointer-events-auto">
+            <div className="text-xs text-[#B1BAD3] uppercase font-bold tracking-widest mb-1">
+              {gameState === 'BETTING' ? 'Place Bets' : gameState === 'SPINNING' ? 'Spinning' : 'Result'}
             </div>
-          )}
+            <div className={`text-3xl font-display font-black bg-[#0F212E]/80 px-6 py-2 rounded-full border shadow-xl backdrop-blur-md transition-colors duration-300 ${gameState === 'BETTING' && countdown <= 5 ? 'text-[#ED4163] border-[#ED4163]/30 animate-pulse' : 'text-white border-white/10'}`}>
+              {gameState === 'BETTING' ? `00:${countdown.toString().padStart(2, '0')}` : '---'}
+            </div>
+          </div>
+          <div className="w-64 max-w-[40%] hidden sm:block"></div>
+        </div>
+
+        {/* Pixi Canvas Container */}
+        <div className="flex-1 relative min-h-[300px]" ref={canvasRef}>
+          <AnimatePresence>
+            {result !== null && gameState === 'RESULT' && (
+              <motion.div 
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.5, opacity: 0 }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20"
+              >
+                <div className={`w-32 h-32 rounded-full flex items-center justify-center border-4 shadow-[0_10px_40px_rgba(0,0,0,0.5)] bg-[#0F212E]/90 backdrop-blur-sm
+                  ${result === 0 ? 'text-[#00E701] border-[#00E701]' : RED_NUMBERS.has(result) ? 'text-[#ED4163] border-[#ED4163]' : 'text-white border-[#2A3F54]'}`}>
+                  <span className="text-6xl font-display font-black drop-shadow-lg">{result}</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Betting Table Container */}
-        <div className="w-full overflow-x-auto pb-6 pt-2 flex justify-center custom-scrollbar shrink-0">
+        <div className="w-full overflow-x-auto pb-8 pt-4 flex justify-center custom-scrollbar shrink-0 bg-[#0B1720]/50 backdrop-blur-md border-t border-white/5">
           <div className="min-w-max select-none flex flex-col gap-2">
             
-            <div className="flex">
+            <div className="flex shadow-2xl rounded-lg overflow-hidden border-2 border-white/10">
               {/* Zero */}
               <div 
-                className="w-12 h-[144px] border border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/10 relative text-white"
+                className="w-14 h-[168px] border-r border-white/10 flex items-center justify-center cursor-pointer hover:bg-white/10 relative text-white bg-[#00E701]/10 hover:bg-[#00E701]/20 transition-colors"
                 onClick={() => placeBet('straight-0')}
               >
-                <span className="font-bold text-xl -rotate-90">0</span>
+                <span className="font-bold text-2xl -rotate-90 text-[#00E701]">0</span>
                 {renderChip('straight-0')}
-                
-                {/* 0 Splits (Right edge of 0, left edge of 1,2,3 is handled by the numbers instead of 0 for simplicity, wait no, let's put them on the numbers) */}
               </div>
 
               {/* 1-36 Grid */}
@@ -392,74 +424,45 @@ export default function RouletteGame({ onBack }) {
                     {Array.from({ length: 12 }).map((_, i) => {
                       const num = i * 3 + rowOffset;
                       const isRed = RED_NUMBERS.has(num);
-                      const colorClass = isRed ? 'bg-[#ED4163]/20 text-[#ED4163]' : 'bg-gray-800 text-white';
+                      const colorClass = isRed ? 'bg-[#ED4163] hover:bg-[#ff5b7b]' : 'bg-[#1A2C38] hover:bg-[#2A3F54]';
                       
                       return (
                         <div 
                           key={num}
-                          className={`w-12 h-12 border border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/10 relative ${colorClass}`}
+                          className={`w-14 h-14 border-r border-b border-white/10 flex items-center justify-center cursor-pointer relative transition-colors ${colorClass}`}
                           onClick={() => placeBet(`straight-${num}`)}
                         >
-                          <span className="font-bold">{num}</span>
+                          <span className="font-bold text-lg text-white drop-shadow-md">{num}</span>
                           {renderChip(`straight-${num}`)}
                           
                           {/* Split Targets */}
-                          {/* Split with 0 */}
                           {i === 0 && (
-                            <div 
-                              className="absolute left-[-10px] top-0 bottom-0 w-[20px] z-10 hover:bg-white/30 cursor-pointer flex items-center justify-center"
-                              onClick={(e) => { e.stopPropagation(); placeBet(`split-0-${num}`); }}
-                            >
+                            <div className="absolute left-[-12px] top-0 bottom-0 w-[24px] z-10 hover:bg-white/30 cursor-pointer flex items-center justify-center" onClick={(e) => { e.stopPropagation(); placeBet(`split-0-${num}`); }}>
                               {renderChip(`split-0-${num}`)}
                             </div>
                           )}
-
-                          {/* Horizontal split */}
                           {i < 11 && (
-                            <div 
-                              className="absolute right-[-10px] top-0 bottom-0 w-[20px] z-10 hover:bg-white/30 cursor-pointer flex items-center justify-center"
-                              onClick={(e) => { e.stopPropagation(); placeBet(`split-${num}-${num+3}`); }}
-                            >
+                            <div className="absolute right-[-12px] top-0 bottom-0 w-[24px] z-10 hover:bg-white/30 cursor-pointer flex items-center justify-center" onClick={(e) => { e.stopPropagation(); placeBet(`split-${num}-${num+3}`); }}>
                               {renderChip(`split-${num}-${num+3}`)}
                             </div>
                           )}
-
-                          {/* Vertical split */}
                           {rowOffset > 1 && (
-                            <div 
-                              className="absolute bottom-[-10px] left-0 right-0 h-[20px] z-10 hover:bg-white/30 cursor-pointer flex items-center justify-center"
-                              onClick={(e) => { e.stopPropagation(); placeBet(`split-${num}-${num-1}`); }}
-                            >
+                            <div className="absolute bottom-[-12px] left-0 right-0 h-[24px] z-10 hover:bg-white/30 cursor-pointer flex items-center justify-center" onClick={(e) => { e.stopPropagation(); placeBet(`split-${num}-${num-1}`); }}>
                               {renderChip(`split-${num}-${num-1}`)}
                             </div>
                           )}
-
-                          {/* Corner split */}
                           {i < 11 && rowOffset > 1 && (
-                            <div 
-                              className="absolute right-[-10px] bottom-[-10px] w-[20px] h-[20px] z-20 hover:bg-white/30 cursor-pointer rounded-full flex items-center justify-center"
-                              onClick={(e) => { e.stopPropagation(); placeBet(`corner-${num}-${num-1}-${num+2}-${num+3}`); }}
-                            >
+                            <div className="absolute right-[-12px] bottom-[-12px] w-[24px] h-[24px] z-20 hover:bg-white/30 cursor-pointer rounded-full flex items-center justify-center" onClick={(e) => { e.stopPropagation(); placeBet(`corner-${num}-${num-1}-${num+2}-${num+3}`); }}>
                               {renderChip(`corner-${num}-${num-1}-${num+2}-${num+3}`)}
                             </div>
                           )}
-
-                          {/* Street (bottom edge of bottom row) */}
                           {rowOffset === 1 && (
-                            <div 
-                              className="absolute bottom-[-10px] left-0 right-0 h-[20px] z-10 hover:bg-white/30 cursor-pointer flex items-center justify-center"
-                              onClick={(e) => { e.stopPropagation(); placeBet(`street-${num}-${num+1}-${num+2}`); }}
-                            >
+                            <div className="absolute bottom-[-12px] left-0 right-0 h-[24px] z-10 hover:bg-white/30 cursor-pointer flex items-center justify-center" onClick={(e) => { e.stopPropagation(); placeBet(`street-${num}-${num+1}-${num+2}`); }}>
                               {renderChip(`street-${num}-${num+1}-${num+2}`)}
                             </div>
                           )}
-
-                          {/* Line (double street, bottom corner of bottom row) */}
                           {rowOffset === 1 && i < 11 && (
-                            <div 
-                              className="absolute right-[-10px] bottom-[-10px] w-[20px] h-[20px] z-20 hover:bg-white/30 cursor-pointer rounded-full flex items-center justify-center"
-                              onClick={(e) => { e.stopPropagation(); placeBet(`line-${num}-${num+1}-${num+2}-${num+3}-${num+4}-${num+5}`); }}
-                            >
+                            <div className="absolute right-[-12px] bottom-[-12px] w-[24px] h-[24px] z-20 hover:bg-white/30 cursor-pointer rounded-full flex items-center justify-center" onClick={(e) => { e.stopPropagation(); placeBet(`line-${num}-${num+1}-${num+2}-${num+3}-${num+4}-${num+5}`); }}>
                               {renderChip(`line-${num}-${num+1}-${num+2}-${num+3}-${num+4}-${num+5}`)}
                             </div>
                           )}
@@ -471,14 +474,14 @@ export default function RouletteGame({ onBack }) {
               </div>
 
               {/* Columns (2:1) */}
-              <div className="flex flex-col">
+              <div className="flex flex-col border-l-2 border-white/10">
                 {[3, 2, 1].map((col) => (
                   <div 
                     key={`col-${col}`}
-                    className="w-12 h-12 border border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/10 relative bg-[#1A2C38]"
+                    className="w-16 h-14 border-b border-white/10 flex items-center justify-center cursor-pointer hover:bg-white/10 relative bg-[#213743] transition-colors"
                     onClick={() => placeBet(`col-${col}`)}
                   >
-                    <span className="text-[10px] font-bold text-[#B1BAD3] rotate-90">2:1</span>
+                    <span className="text-xs font-bold text-[#B1BAD3] uppercase">2:1</span>
                     {renderChip(`col-${col}`)}
                   </div>
                 ))}
@@ -486,25 +489,23 @@ export default function RouletteGame({ onBack }) {
             </div>
 
             {/* Outside Bets */}
-            <div className="flex ml-12">
-              <div className="w-[192px] h-12 border border-white/20 flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-white bg-[#1A2C38]" onClick={() => placeBet('dozen-1')}>1st 12 {renderChip('dozen-1')}</div>
-              <div className="w-[192px] h-12 border border-white/20 flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-white bg-[#1A2C38]" onClick={() => placeBet('dozen-2')}>2nd 12 {renderChip('dozen-2')}</div>
-              <div className="w-[192px] h-12 border border-white/20 flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-white bg-[#1A2C38]" onClick={() => placeBet('dozen-3')}>3rd 12 {renderChip('dozen-3')}</div>
+            <div className="flex ml-14 gap-1">
+              <div className="flex-1 h-12 rounded flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-[#B1BAD3] uppercase bg-[#213743] border border-white/5 transition-colors" onClick={() => placeBet('dozen-1')}>1st 12 {renderChip('dozen-1')}</div>
+              <div className="flex-1 h-12 rounded flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-[#B1BAD3] uppercase bg-[#213743] border border-white/5 transition-colors" onClick={() => placeBet('dozen-2')}>2nd 12 {renderChip('dozen-2')}</div>
+              <div className="flex-1 h-12 rounded flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-[#B1BAD3] uppercase bg-[#213743] border border-white/5 transition-colors" onClick={() => placeBet('dozen-3')}>3rd 12 {renderChip('dozen-3')}</div>
             </div>
             
-            <div className="flex ml-12">
-              <div className="w-24 h-12 border border-white/20 flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-white bg-[#1A2C38]" onClick={() => placeBet('half-1')}>1 to 18 {renderChip('half-1')}</div>
-              <div className="w-24 h-12 border border-white/20 flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-white bg-[#1A2C38]" onClick={() => placeBet('parity-even')}>EVEN {renderChip('parity-even')}</div>
-              <div className="w-24 h-12 border border-white/20 flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-[#ED4163] bg-[#ED4163]/10" onClick={() => placeBet('color-red')}>
-                <div className="w-4 h-4 bg-[#ED4163] rotate-45 mr-2"></div>
-                RED {renderChip('color-red')}
+            <div className="flex ml-14 gap-1">
+              <div className="flex-1 h-12 rounded flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-[#B1BAD3] uppercase bg-[#213743] border border-white/5 transition-colors" onClick={() => placeBet('half-1')}>1 to 18 {renderChip('half-1')}</div>
+              <div className="flex-1 h-12 rounded flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-[#B1BAD3] uppercase bg-[#213743] border border-white/5 transition-colors" onClick={() => placeBet('parity-even')}>Even {renderChip('parity-even')}</div>
+              <div className="flex-1 h-12 rounded flex justify-center items-center cursor-pointer hover:bg-[#ff5b7b] relative text-sm font-bold text-white uppercase bg-[#ED4163] border border-white/5 transition-colors shadow-inner" onClick={() => placeBet('color-red')}>
+                Red {renderChip('color-red')}
               </div>
-              <div className="w-24 h-12 border border-white/20 flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-white bg-gray-800" onClick={() => placeBet('color-black')}>
-                <div className="w-4 h-4 bg-black rotate-45 mr-2 border border-white/20"></div>
-                BLACK {renderChip('color-black')}
+              <div className="flex-1 h-12 rounded flex justify-center items-center cursor-pointer hover:bg-[#2A3F54] relative text-sm font-bold text-white uppercase bg-[#1A2C38] border border-white/5 transition-colors shadow-inner" onClick={() => placeBet('color-black')}>
+                Black {renderChip('color-black')}
               </div>
-              <div className="w-24 h-12 border border-white/20 flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-white bg-[#1A2C38]" onClick={() => placeBet('parity-odd')}>ODD {renderChip('parity-odd')}</div>
-              <div className="w-24 h-12 border border-white/20 flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-white bg-[#1A2C38]" onClick={() => placeBet('half-2')}>19 to 36 {renderChip('half-2')}</div>
+              <div className="flex-1 h-12 rounded flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-[#B1BAD3] uppercase bg-[#213743] border border-white/5 transition-colors" onClick={() => placeBet('parity-odd')}>Odd {renderChip('parity-odd')}</div>
+              <div className="flex-1 h-12 rounded flex justify-center items-center cursor-pointer hover:bg-white/10 relative text-sm font-bold text-[#B1BAD3] uppercase bg-[#213743] border border-white/5 transition-colors" onClick={() => placeBet('half-2')}>19 to 36 {renderChip('half-2')}</div>
             </div>
 
           </div>

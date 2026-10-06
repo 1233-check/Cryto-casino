@@ -36,7 +36,10 @@ const Card = ({ card, size = 'large', className = "" }) => {
   );
 };
 
-export default function HiLoGame({ balance, onBack }) {
+import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
+
+export default function HiLoGame({ onBack }) {
+  const [balance, setBalanceState] = useState(getBalance());
   const [betAmount, setBetAmount] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentCard, setCurrentCard] = useState(null);
@@ -45,6 +48,12 @@ export default function HiLoGame({ balance, onBack }) {
   const [status, setStatus] = useState('idle'); // 'idle', 'playing', 'lost', 'cashed_out'
 
   const scrollRef = useRef(null);
+
+  useEffect(() => {
+    const handleUpdate = () => setBalanceState(getBalance());
+    window.addEventListener('balance-update', handleUpdate);
+    return () => window.removeEventListener('balance-update', handleUpdate);
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -65,6 +74,11 @@ export default function HiLoGame({ balance, onBack }) {
   };
 
   const handleStart = () => {
+    if (betAmount <= 0) return;
+    const newBal = subtractFromBalance(betAmount);
+    if (newBal === null) return alert('Insufficient balance');
+    setBalanceState(newBal);
+
     setIsPlaying(true);
     setStatus('playing');
     setCumulativeMultiplier(1);
@@ -97,12 +111,35 @@ export default function HiLoGame({ balance, onBack }) {
     } else {
       setIsPlaying(false);
       setStatus('lost');
+      addHistoryEntry({
+        game: 'hilo',
+        bet: betAmount,
+        payout: 0,
+        profit: -betAmount,
+        multiplier: 0,
+        details: { stepsCompleted: drawnCards.length, lost: true }
+      });
     }
   };
 
   const handleCashout = () => {
+    if (!isPlaying) return;
     setIsPlaying(false);
     setStatus('cashed_out');
+    const finalMult = parseFloat(cumulativeMultiplier.toFixed(4));
+    const payout = parseFloat((betAmount * finalMult).toFixed(8));
+    const profitVal = parseFloat((payout - betAmount).toFixed(8));
+    if (payout > 0) {
+      addToBalance(payout);
+    }
+    addHistoryEntry({
+      game: 'hilo',
+      bet: betAmount,
+      payout,
+      profit: profitVal,
+      multiplier: finalMult,
+      details: { stepsCompleted: drawnCards.length - 1, lost: false }
+    });
   };
 
   const controls = (

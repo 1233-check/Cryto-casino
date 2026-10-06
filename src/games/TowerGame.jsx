@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
-import { Gem, Bomb } from 'lucide-react';
+import { Gem, Bomb, ShieldCheck, Skull } from 'lucide-react';
+import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
 
 const difficulties = {
   easy: { cols: 4, safe: 3, bombs: 1, name: 'Easy' },
@@ -17,21 +19,30 @@ const getMultiplier = (diffKey, level) => {
 };
 
 export default function TowerGame({ onBack }) {
+  const [balance, setBalanceState] = useState(getBalance());
   const [difficulty, setDifficulty] = useState('easy');
-  const [betAmount, setBetAmount] = useState(10);
+  const [betAmount, setBetAmount] = useState(0.1);
   const [gameState, setGameState] = useState('idle'); // 'idle', 'playing', 'cashed_out', 'game_over'
   const [currentFloor, setCurrentFloor] = useState(0); 
   const [tower, setTower] = useState([]);
   const [profit, setProfit] = useState(0);
 
+  useEffect(() => {
+    const handleUpdate = () => setBalanceState(getBalance());
+    window.addEventListener('balance-update', handleUpdate);
+    return () => window.removeEventListener('balance-update', handleUpdate);
+  }, []);
+
   const startGame = () => {
+    if (betAmount <= 0) return;
+    const newBal = subtractFromBalance(betAmount);
+    if (newBal === null) return alert('Insufficient balance');
+    setBalanceState(newBal);
+
     const d = difficulties[difficulty];
     const newTower = Array(10).fill(null).map(() => {
       const bombIndex = Math.floor(Math.random() * d.cols);
-      return {
-        bombIndex,
-        pickedIndex: null
-      };
+      return { bombIndex, pickedIndex: null };
     });
     setTower(newTower);
     setCurrentFloor(0);
@@ -42,7 +53,18 @@ export default function TowerGame({ onBack }) {
   const handleCashout = () => {
     if (gameState !== 'playing' || currentFloor === 0) return;
     const mult = getMultiplier(difficulty, currentFloor);
-    setProfit(betAmount * mult);
+    const payout = parseFloat((betAmount * mult).toFixed(8));
+    const profitVal = parseFloat((payout - betAmount).toFixed(8));
+    addToBalance(payout);
+    addHistoryEntry({
+      game: 'tower',
+      bet: betAmount,
+      payout,
+      profit: profitVal,
+      multiplier: mult,
+      details: { difficulty, clearedFloors: currentFloor, hitBomb: false }
+    });
+    setProfit(profitVal);
     setGameState('cashed_out');
   };
 
@@ -53,20 +75,35 @@ export default function TowerGame({ onBack }) {
     const isBomb = floorData.bombIndex === colIndex;
 
     const newTower = [...tower];
-    newTower[floorIndex] = {
-      ...floorData,
-      pickedIndex: colIndex
-    };
+    newTower[floorIndex] = { ...floorData, pickedIndex: colIndex };
     setTower(newTower);
 
     if (isBomb) {
       setGameState('game_over');
-      setProfit(0);
+      setProfit(-betAmount);
+      addHistoryEntry({
+        game: 'tower',
+        bet: betAmount,
+        payout: 0,
+        profit: -betAmount,
+        multiplier: 0,
+        details: { difficulty, clearedFloors: currentFloor, hitBomb: true }
+      });
     } else {
       if (currentFloor === 9) {
-        // Auto cashout on top floor
         const mult = getMultiplier(difficulty, 10);
-        setProfit(betAmount * mult);
+        const payout = parseFloat((betAmount * mult).toFixed(8));
+        const profitVal = parseFloat((payout - betAmount).toFixed(8));
+        addToBalance(payout);
+        addHistoryEntry({
+          game: 'tower',
+          bet: betAmount,
+          payout,
+          profit: profitVal,
+          multiplier: mult,
+          details: { difficulty, clearedFloors: 10, hitBomb: false }
+        });
+        setProfit(profitVal);
         setGameState('cashed_out');
         setCurrentFloor(10);
       } else {
@@ -75,12 +112,10 @@ export default function TowerGame({ onBack }) {
     }
   };
 
-  const floors = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
-
   const renderTile = (floorIndex, colIndex) => {
     const floorData = tower[floorIndex];
     const isCurrentFloor = gameState === 'playing' && floorIndex === currentFloor;
-    const isPastFloor = floorIndex < currentFloor;
+    const isPastFloor = gameState !== 'idle' && floorIndex < currentFloor;
     const isFutureFloor = floorIndex > currentFloor;
     const isGameOver = gameState === 'game_over';
     const isCashedOut = gameState === 'cashed_out';
@@ -93,72 +128,75 @@ export default function TowerGame({ onBack }) {
       isBomb = floorData.bombIndex === colIndex;
     }
 
+    // Advanced UI Styling
     let content = null;
-    let bgClass = "bg-[#2F4553]";
-    let shadowClass = "";
-    let opacityClass = "opacity-100";
-    let cursorClass = "cursor-default";
+    let bgStyle = "bg-[#2F4553] border-b-4 border-[#213743]"; 
+    let opacityStyle = "opacity-100";
+    let interactiveStyle = "cursor-default";
 
     if (gameState === 'idle') {
-      bgClass = "bg-[#2F4553] opacity-50";
+      bgStyle = "bg-[#2F4553] border-b-4 border-[#213743] opacity-60";
     } else if (isCurrentFloor) {
-      bgClass = "bg-[#2F4553] hover:bg-[#3d5564] hover:-translate-y-1";
-      cursorClass = "cursor-pointer";
-      shadowClass = "shadow-lg";
+      bgStyle = "bg-[#3A5364] border-b-4 border-[#2C4151] hover:bg-[#456175] hover:border-[#334D61] active:border-b-0 active:translate-y-1";
+      interactiveStyle = "cursor-pointer shadow-[0_4px_15px_rgba(0,0,0,0.3)]";
     } else if (isFutureFloor) {
-      opacityClass = "opacity-50";
+      opacityStyle = "opacity-40";
     }
 
     if (isPicked) {
       if (isBomb) {
-        bgClass = "bg-[#E53E3E]";
-        content = <Bomb className="text-white w-5 h-5 md:w-6 md:h-6 animate-pulse" />;
+        bgStyle = "bg-gradient-to-b from-[#ED4163] to-[#C12543] border-b-4 border-[#93152D]";
+        content = <Skull className="text-white w-6 h-6 animate-pulse" />;
       } else {
-        bgClass = "bg-[#00E701]";
-        shadowClass = "shadow-[0_0_15px_rgba(0,231,1,0.2)]";
-        content = <Gem className="text-[#0F212E] w-5 h-5 md:w-6 md:h-6" fill="currentColor" />;
+        bgStyle = "bg-gradient-to-b from-[#00E701] to-[#00C001] border-b-4 border-[#009201]";
+        content = <ShieldCheck className="text-[#0F212E] w-6 h-6" />;
       }
-      opacityClass = "opacity-100";
+      interactiveStyle = "cursor-default shadow-[0_0_20px_rgba(0,231,1,0.3)] border-b-0 translate-y-1";
     } else if (gameState !== 'idle' && (isGameOver || isCashedOut)) {
       if (isBomb) {
-        content = <Bomb className="text-[#E53E3E] w-5 h-5 md:w-6 md:h-6 opacity-40" />;
+        content = <Bomb className="text-[#ED4163] w-6 h-6 opacity-30" />;
+        bgStyle = "bg-[#2F4553] border-b-4 border-[#213743]";
       } else {
-        content = <Gem className="text-[#00E701] w-5 h-5 md:w-6 md:h-6 opacity-40" fill="currentColor" />;
+        content = <Gem className="text-[#00E701] w-6 h-6 opacity-30" />;
       }
-      opacityClass = "opacity-40";
+      opacityStyle = "opacity-40";
     } else if (isPastFloor && !isPicked) {
-      bgClass = "bg-[#2F4553]";
-      opacityClass = "opacity-30";
+      opacityStyle = "opacity-20";
     }
 
     return (
-      <button
+      <motion.button
         key={colIndex}
         disabled={!isCurrentFloor}
         onClick={() => handleTileClick(floorIndex, colIndex)}
-        className={`flex-1 h-12 md:h-14 rounded-lg flex items-center justify-center transition-all duration-300 transform
-          ${bgClass} ${shadowClass} ${opacityClass} ${cursorClass}
-        `}
+        initial={false}
+        animate={{ scale: isPicked ? 1.05 : 1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        className={`flex-1 h-14 md:h-16 rounded-xl flex items-center justify-center transition-colors duration-200 
+          ${bgStyle} ${interactiveStyle} ${opacityStyle} relative overflow-hidden`}
       >
+        {isCurrentFloor && !isPicked && (
+          <div className="absolute inset-0 bg-white opacity-0 hover:opacity-10 transition-opacity"></div>
+        )}
         {content}
-      </button>
+      </motion.button>
     );
   };
 
   const controls = (
     <div className="flex flex-col gap-4">
-      <div className="bg-[#0F212E] rounded-lg border border-white/[0.04] p-3 flex flex-col gap-2">
-        <label className="text-xs text-[#B1BAD3] font-semibold uppercase">Difficulty</label>
-        <div className="flex gap-1 bg-[#1A2C38] rounded-md p-1">
+      <div className="bg-[#0F212E] rounded-xl border border-white/5 p-4 flex flex-col gap-3 shadow-inner">
+        <label className="text-xs text-[#B1BAD3] font-bold uppercase tracking-wider">Difficulty</label>
+        <div className="flex gap-2">
           {Object.entries(difficulties).map(([key, diff]) => (
             <button
               key={key}
               disabled={gameState === 'playing'}
               onClick={() => setDifficulty(key)}
-              className={`flex-1 text-sm py-2 rounded font-semibold transition-all ${
+              className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all duration-200 ${
                 difficulty === key 
-                  ? 'bg-[#2F4553] text-white shadow-sm' 
-                  : 'text-[#B1BAD3] hover:text-white hover:bg-white/5 disabled:opacity-50'
+                  ? 'bg-gradient-to-b from-[#2F4553] to-[#213743] text-white shadow-[0_2px_10px_rgba(0,0,0,0.3)] ring-1 ring-white/10' 
+                  : 'bg-[#1A2C38] text-[#8790a1] hover:text-white hover:bg-[#213743] disabled:opacity-50'
               }`}
             >
               {diff.name}
@@ -167,64 +205,96 @@ export default function TowerGame({ onBack }) {
         </div>
       </div>
 
-      <BetControls 
-        betAmount={betAmount} 
-        setBetAmount={setBetAmount}
-        disabled={gameState === 'playing'}
-      />
+      <div className="bg-[#0F212E] rounded-xl border border-white/5 p-4 shadow-inner">
+        <BetControls 
+          betAmount={betAmount} 
+          setBetAmount={setBetAmount}
+          disabled={gameState === 'playing'}
+        />
+      </div>
 
-      {gameState === 'playing' ? (
-        <button 
-          onClick={handleCashout}
-          disabled={currentFloor === 0}
-          className="w-full py-4 rounded-lg font-bold text-black uppercase transition-all
-                     bg-[#00E701] hover:bg-[#00E701]/90 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Cashout {currentFloor > 0 ? (betAmount * getMultiplier(difficulty, currentFloor)).toFixed(2) : ''}
-        </button>
-      ) : (
-        <button 
-          onClick={startGame}
-          className="w-full bg-[#00E701] hover:bg-[#00E701]/90 text-black py-4 rounded-lg font-bold uppercase transition-all"
-        >
-          Bet
-        </button>
-      )}
+      <AnimatePresence mode="wait">
+        {gameState === 'playing' ? (
+          <motion.button 
+            key="cashout"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            onClick={handleCashout}
+            disabled={currentFloor === 0}
+            className="w-full py-4 rounded-xl font-bold text-black uppercase tracking-wider transition-all
+                       bg-gradient-to-b from-[#00E701] to-[#00C001] shadow-[0_4px_15px_rgba(0,231,1,0.2)] 
+                       hover:shadow-[0_6px_20px_rgba(0,231,1,0.3)] hover:-translate-y-0.5 active:translate-y-0
+                       disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          >
+            Cashout {currentFloor > 0 ? (betAmount * getMultiplier(difficulty, currentFloor)).toFixed(2) : ''}
+          </motion.button>
+        ) : (
+          <motion.button 
+            key="bet"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            onClick={startGame}
+            disabled={betAmount > balance}
+            className="w-full py-4 rounded-xl font-bold text-black uppercase tracking-wider transition-all
+                       bg-gradient-to-b from-[#00E701] to-[#00C001] shadow-[0_4px_15px_rgba(0,231,1,0.2)] 
+                       hover:shadow-[0_6px_20px_rgba(0,231,1,0.3)] hover:-translate-y-0.5 active:translate-y-0
+                       disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          >
+            Bet
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 
   return (
-    <GameLayout title="Tower" onBack={onBack} controls={controls}>
-      <div className="flex-1 flex flex-col items-center justify-center py-8 relative">
+    <GameLayout title="Tower" onBack={onBack} controls={controls} balance={balance}>
+      <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 relative bg-gradient-to-b from-[#0F212E] to-[#1A2C38]/50">
         
-        {/* Game Status Banner */}
-        {gameState === 'cashed_out' && (
-          <div className="absolute top-4 md:top-8 left-1/2 -translate-x-1/2 bg-[#00E701]/20 text-[#00E701] px-6 py-3 rounded-full font-bold text-lg border border-[#00E701]/30 shadow-[0_0_20px_rgba(0,231,1,0.2)] animate-bounce z-10 whitespace-nowrap">
-            {profit.toFixed(2)} payout!
-          </div>
-        )}
-        {gameState === 'game_over' && (
-          <div className="absolute top-4 md:top-8 left-1/2 -translate-x-1/2 bg-[#E53E3E]/20 text-[#E53E3E] px-6 py-3 rounded-full font-bold text-lg border border-[#E53E3E]/30 z-10 whitespace-nowrap">
-            Tower Crumbled
-          </div>
-        )}
+        {/* Status Overlay */}
+        <AnimatePresence>
+          {gameState === 'cashed_out' && (
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="absolute top-8 left-1/2 -translate-x-1/2 bg-[#0F212E]/90 text-[#00E701] px-8 py-4 rounded-2xl font-black text-2xl md:text-3xl border-2 border-[#00E701]/30 shadow-[0_0_30px_rgba(0,231,1,0.3)] backdrop-blur-md z-20 flex flex-col items-center"
+            >
+              <span className="text-sm font-bold text-[#B1BAD3] uppercase tracking-widest mb-1">You Won</span>
+              +{profit.toFixed(4)}
+            </motion.div>
+          )}
+          {gameState === 'game_over' && (
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="absolute top-8 left-1/2 -translate-x-1/2 bg-[#0F212E]/90 text-[#ED4163] px-8 py-4 rounded-2xl font-black text-2xl md:text-3xl border-2 border-[#ED4163]/30 shadow-[0_0_30px_rgba(237,65,99,0.3)] backdrop-blur-md z-20 flex flex-col items-center"
+            >
+              <span className="text-sm font-bold text-[#B1BAD3] uppercase tracking-widest mb-1">Busted</span>
+              {profit.toFixed(4)}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <div className="w-full max-w-lg mx-auto flex flex-col gap-2 px-4 z-0 mt-8 md:mt-0">
-          {floors.map(floorIndex => {
+        <div className="w-full max-w-xl mx-auto flex flex-col gap-2 relative z-10">
+          {[9, 8, 7, 6, 5, 4, 3, 2, 1, 0].map(floorIndex => {
             const mult = getMultiplier(difficulty, floorIndex + 1).toFixed(2);
             const isActive = gameState === 'playing' && currentFloor === floorIndex;
             const isPassed = gameState !== 'idle' && currentFloor > floorIndex;
             
             return (
-              <div key={floorIndex} className="flex gap-4 items-center">
+              <div key={floorIndex} className="flex gap-4 items-center group">
                 <div className="flex-1 flex gap-2">
                   {Array(difficulties[difficulty].cols).fill(null).map((_, colIndex) => (
                     renderTile(floorIndex, colIndex)
                   ))}
                 </div>
-                <div className={`w-14 text-sm font-bold font-display text-right transition-colors
-                  ${isActive ? 'text-white scale-110 drop-shadow-md' : 
-                    isPassed ? 'text-[#00E701]' : 'text-[#8790a1]'}`}
+                <div className={`w-16 text-sm font-bold font-display text-right transition-all duration-300
+                  ${isActive ? 'text-white scale-125 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 
+                    isPassed ? 'text-[#00E701]' : 'text-[#557086] group-hover:text-[#B1BAD3]'}`}
                 >
                   {mult}x
                 </div>

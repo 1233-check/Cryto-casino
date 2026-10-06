@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
 import { getGameResult } from '../utils/provablyFair';
+import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
 
-export default function LimboGame({ balance, onBack }) {
+export default function LimboGame({ onBack }) {
+  const [balance, setBalanceState] = useState(getBalance());
   const [betAmount, setBetAmount] = useState(1);
   const [targetMultiplier, setTargetMultiplier] = useState(2.00);
   const [result, setResult] = useState(1.00);
@@ -11,16 +13,37 @@ export default function LimboGame({ balance, onBack }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [status, setStatus] = useState('idle'); // 'idle', 'spinning', 'finished'
 
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    const handleUpdate = () => setBalanceState(getBalance());
+    window.addEventListener('balance-update', handleUpdate);
+    return () => window.removeEventListener('balance-update', handleUpdate);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
+
   const winChance = targetMultiplier >= 1.01 ? (99 / targetMultiplier).toFixed(4) : 0;
 
   const handleBet = () => {
-    if (isPlaying) return;
+    if (isPlaying || betAmount <= 0) return;
+    const newBal = subtractFromBalance(betAmount);
+    if (newBal === null) return alert('Insufficient balance');
+    setBalanceState(newBal);
+
     setIsPlaying(true);
     setStatus('spinning');
     
     // Provably fair float
     const float = getGameResult(0, 1);
-    const finalResult = Math.max(1, Math.floor((0.99 / float) * 100) / 100);
+    const safeFloat = Math.max(0.00000001, float);
+    const finalResult = Math.max(1, Math.floor((0.99 / safeFloat) * 100) / 100);
     
     setResult(finalResult);
 
@@ -34,15 +57,35 @@ export default function LimboGame({ balance, onBack }) {
         // Odometer spin effect logic
         const spinValue = (1.00 + Math.random() * 99).toFixed(2);
         setDisplayResult(Number(spinValue));
-        requestAnimationFrame(animate);
+        rafRef.current = requestAnimationFrame(animate);
       } else {
         setDisplayResult(finalResult);
         setIsPlaying(false);
         setStatus('finished');
+
+        const won = finalResult >= targetMultiplier;
+        const payout = won ? parseFloat((betAmount * targetMultiplier).toFixed(8)) : 0;
+        const profit = parseFloat((payout - betAmount).toFixed(8));
+
+        if (won && payout > 0) {
+          addToBalance(payout);
+        }
+
+        addHistoryEntry({
+          game: 'limbo',
+          bet: betAmount,
+          payout,
+          profit,
+          multiplier: won ? targetMultiplier : 0,
+          details: { targetMultiplier, resultMultiplier: finalResult, float: safeFloat }
+        });
       }
     };
     
-    requestAnimationFrame(animate);
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+    rafRef.current = requestAnimationFrame(animate);
   };
 
   const isWin = status === 'finished' && result >= targetMultiplier;

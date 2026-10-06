@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { RefreshCcw } from 'lucide-react';
 import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
 import { getGameResult } from '../utils/provablyFair';
+import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
 
-export default function DiceGame({ balance, onBack }) {
+export default function DiceGame({ onBack }) {
+  const [balance, setBalanceState] = useState(getBalance());
   const [betAmount, setBetAmount] = useState(10);
   const [target, setTarget] = useState(50.00);
   const [condition, setCondition] = useState('over'); // 'over' | 'under'
@@ -14,19 +16,43 @@ export default function DiceGame({ balance, onBack }) {
   const [hasRolled, setHasRolled] = useState(false);
   const [history, setHistory] = useState([]);
 
+  useEffect(() => {
+    const handleUpdate = () => setBalanceState(getBalance());
+    window.addEventListener('balance-update', handleUpdate);
+    return () => window.removeEventListener('balance-update', handleUpdate);
+  }, []);
+
   const winChance = condition === 'over' ? 100 - target : target;
   const multiplier = 99 / winChance;
   const profitOnWin = betAmount * multiplier - betAmount;
 
   const handleRoll = () => {
-    if (isRolling) return;
+    if (isRolling || betAmount <= 0) return;
+    const newBal = subtractFromBalance(betAmount);
+    if (newBal === null) return alert('Insufficient balance');
+    setBalanceState(newBal);
     setIsRolling(true);
     
     // Quick timeout to allow UI to show rolling state
     setTimeout(() => {
       const roll = getGameResult(0, 100);
       const won = condition === 'over' ? roll > target : roll < target;
-      
+      const payout = won ? parseFloat((betAmount * multiplier).toFixed(8)) : 0;
+      const profit = parseFloat((payout - betAmount).toFixed(8));
+
+      if (won && payout > 0) {
+        addToBalance(payout);
+      }
+
+      addHistoryEntry({
+        game: 'dice',
+        bet: betAmount,
+        payout,
+        profit,
+        multiplier: won ? multiplier : 0,
+        details: { roll, target, condition, winChance }
+      });
+
       setResult(roll);
       setHasRolled(true);
       setIsRolling(false);

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Diamond, Bomb, Trophy } from 'lucide-react';
 import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
 import { shuffleArray } from '../utils/provablyFair';
+import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
 
 function comb(n, k) {
   if (k < 0 || k > n) return 0;
@@ -25,6 +26,7 @@ function getMultiplier(mines, revealedSafe) {
 }
 
 export default function MinesGame({ onBack }) {
+  const [balance, setBalanceState] = useState(getBalance());
   const [betAmount, setBetAmount] = useState(1);
   const [minesCount, setMinesCount] = useState(3);
   
@@ -38,7 +40,18 @@ export default function MinesGame({ onBack }) {
   
   const [lastWinAmount, setLastWinAmount] = useState(0);
 
+  useEffect(() => {
+    const handleUpdate = () => setBalanceState(getBalance());
+    window.addEventListener('balance-update', handleUpdate);
+    return () => window.removeEventListener('balance-update', handleUpdate);
+  }, []);
+
   const startGame = () => {
+    if (betAmount <= 0) return;
+    const newBal = subtractFromBalance(betAmount);
+    if (newBal === null) return alert('Insufficient balance');
+    setBalanceState(newBal);
+
     // Generate mines using provablyFair shuffleArray
     const arr = Array.from({ length: 25 }, (_, i) => i);
     const shuffled = shuffleArray(arr);
@@ -66,6 +79,14 @@ export default function MinesGame({ onBack }) {
       setGameOver(true);
       setGameActive(false);
       setWin(false);
+      addHistoryEntry({
+        game: 'mines',
+        bet: betAmount,
+        payout: 0,
+        profit: -betAmount,
+        multiplier: 0,
+        details: { minesCount, safeRevealed: revealedCount, hitMine: true }
+      });
     } else {
       // Safe
       newTiles[index] = 'safe';
@@ -87,8 +108,19 @@ export default function MinesGame({ onBack }) {
     if (count === 0) return;
     
     const mult = getMultiplier(minesCount, count);
-    const winAmt = betAmount * mult;
+    const winAmt = parseFloat((betAmount * mult).toFixed(8));
+    const profit = parseFloat((winAmt - betAmount).toFixed(8));
     
+    addToBalance(winAmt);
+    addHistoryEntry({
+      game: 'mines',
+      bet: betAmount,
+      payout: winAmt,
+      profit,
+      multiplier: mult,
+      details: { minesCount, safeRevealed: count, hitMine: false }
+    });
+
     setLastWinAmount(winAmt);
     setGameOver(true);
     setGameActive(false);

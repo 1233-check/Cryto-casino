@@ -4,7 +4,7 @@ import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
 import { SLOT_SYMBOLS, SLOT_PAYOUTS } from '../utils/constants';
 import { playSound } from '../utils/audio';
-import { getBalance, subtractFromBalance, addToBalance } from '../utils/balance';
+import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
 
 const PAYLINES = [
   [1, 1, 1, 1, 1], // 1: Middle
@@ -41,9 +41,20 @@ export default function SlotsGame({ onBack }) {
   const reelsRef = useRef([]);
   const linesContainerRef = useRef(null);
   
+  const [balance, setBalanceState] = useState(getBalance());
   const [betAmount, setBetAmount] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [lastWin, setLastWin] = useState(0);
+
+  const isPlayingRef = useRef(isPlaying);
+  useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
+  const onReelsStoppedRef = useRef(null);
+
+  useEffect(() => {
+    const handleUpdate = () => setBalanceState(getBalance());
+    window.addEventListener('balance-update', handleUpdate);
+    return () => window.removeEventListener('balance-update', handleUpdate);
+  }, []);
 
   const getRandomSymbol = () => SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)];
 
@@ -219,11 +230,12 @@ export default function SlotsGame({ onBack }) {
         }
         
         // If all reels just became idle, evaluate wins
-        if (allStopped && isPlaying) {
-           if (window.handleReelsStopped) {
-               window.handleReelsStopped();
-               window.handleReelsStopped = null;
-           }
+        if (allStopped && isPlayingRef.current) {
+          if (onReelsStoppedRef.current) {
+            const cb = onReelsStoppedRef.current;
+            onReelsStoppedRef.current = null;
+            cb();
+          }
         }
       });
     };
@@ -231,19 +243,30 @@ export default function SlotsGame({ onBack }) {
     initPixi();
     return () => {
       isDestroyed = true;
+      onReelsStoppedRef.current = null;
       if (appRef.current) appRef.current.destroy(true, { children: true });
     };
   }, []); // Run once
 
   const spin = () => {
-    if (isPlaying) return;
-    if (betAmount > getBalance()) return alert('Insufficient balance');
+    if (isPlaying || betAmount <= 0) return;
+    const newBal = subtractFromBalance(betAmount);
+    if (newBal === null) return alert('Insufficient balance');
+    setBalanceState(newBal);
     
     playSound('bet');
-    subtractFromBalance(betAmount);
     setIsPlaying(true);
     setLastWin(0);
-    linesContainerRef.current.removeChildren();
+
+    if (linesContainerRef.current) {
+      while (linesContainerRef.current.children.length > 0) {
+        const child = linesContainerRef.current.children[0];
+        linesContainerRef.current.removeChild(child);
+        if (child.destroy) {
+          child.destroy({ children: true });
+        }
+      }
+    }
 
     const reels = reelsRef.current;
     const finalResult = []; // 5 columns, each 3 symbols
@@ -261,7 +284,7 @@ export default function SlotsGame({ onBack }) {
     }
 
     // Set callback for when all stop
-    window.handleReelsStopped = () => {
+    onReelsStoppedRef.current = () => {
        evaluateWins(finalResult);
     };
   };
@@ -269,6 +292,7 @@ export default function SlotsGame({ onBack }) {
   const evaluateWins = (result) => {
     let totalWin = 0;
     const winningLines = [];
+    const lineBet = betAmount / 20;
 
     // result[col][row]
     for (let i = 0; i < PAYLINES.length; i++) {
@@ -289,12 +313,15 @@ export default function SlotsGame({ onBack }) {
       if (matchCount >= 3) {
         const multiplier = SLOT_PAYOUTS[firstSymbol]?.[matchCount] || 0;
         if (multiplier > 0) {
-          const winAmount = betAmount * multiplier;
+          const winAmount = lineBet * multiplier;
           totalWin += winAmount;
           winningLines.push({ lineIndex: i, count: matchCount, amount: winAmount });
         }
       }
     }
+
+    totalWin = parseFloat(totalWin.toFixed(8));
+    const profit = parseFloat((totalWin - betAmount).toFixed(8));
 
     if (totalWin > 0) {
       playSound('win');
@@ -303,10 +330,28 @@ export default function SlotsGame({ onBack }) {
       drawWinningLines(winningLines);
     }
     
+    addHistoryEntry({
+      game: 'slots',
+      bet: betAmount,
+      payout: totalWin,
+      profit,
+      multiplier: betAmount > 0 ? parseFloat((totalWin / betAmount).toFixed(2)) : 0,
+      details: { winningLinesCount: winningLines.length }
+    });
+
     setIsPlaying(false);
   };
 
   const drawWinningLines = (wins) => {
+    if (!linesContainerRef.current) return;
+    while (linesContainerRef.current.children.length > 0) {
+      const child = linesContainerRef.current.children[0];
+      linesContainerRef.current.removeChild(child);
+      if (child.destroy) {
+        child.destroy({ children: true });
+      }
+    }
+
     const graphics = new PIXI.Graphics();
     linesContainerRef.current.addChild(graphics);
 
@@ -356,7 +401,7 @@ export default function SlotsGame({ onBack }) {
   );
 
   return (
-    <GameLayout title="Slots" onBack={onBack} controls={controls}>
+    <GameLayout title="Slots" balance={balance} onBack={onBack} controls={controls}>
       <div className="absolute inset-0 bg-gradient-to-b from-[#0F212E] to-[#1A2C38]/50" />
       <div className="absolute inset-0" ref={canvasRef} />
       

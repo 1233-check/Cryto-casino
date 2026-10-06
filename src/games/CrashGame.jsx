@@ -3,14 +3,16 @@ import * as PIXI from 'pixi.js';
 import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
 import { getCrashPoint, generateServerSeed } from '../utils/provablyFair';
+import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
 
-export default function CrashGame({ balance, setBalance, onBack }) {
+export default function CrashGame({ onBack }) {
   const canvasRef = useRef(null);
   const appRef = useRef(null);
   const graphicsBaseRef = useRef(null);
   const graphicsGlowRef = useRef(null);
   const graphicsParticlesRef = useRef(null);
   
+  const [balance, setBalanceState] = useState(getBalance());
   const [betAmount, setBetAmount] = useState(10);
   const [autoCashout, setAutoCashout] = useState(2.0);
   const [gamePhase, setGamePhase] = useState('WAITING'); // 'WAITING', 'RUNNING', 'CRASHED'
@@ -24,7 +26,6 @@ export default function CrashGame({ balance, setBalance, onBack }) {
   const autoCashoutRef = useRef(autoCashout);
   const betStateRef = useRef(betState);
   const betAmountRef = useRef(betAmount);
-  const setBalanceRef = useRef(setBalance);
   
   const startTimeRef = useRef(Date.now());
   const crashPointRef = useRef(1.0);
@@ -32,11 +33,16 @@ export default function CrashGame({ balance, setBalance, onBack }) {
   const ptsRef = useRef([]);
   const particlesRef = useRef([]);
 
+  useEffect(() => {
+    const handleUpdate = () => setBalanceState(getBalance());
+    window.addEventListener('balance-update', handleUpdate);
+    return () => window.removeEventListener('balance-update', handleUpdate);
+  }, []);
+
   useEffect(() => { phaseRef.current = gamePhase; }, [gamePhase]);
   useEffect(() => { autoCashoutRef.current = autoCashout; }, [autoCashout]);
   useEffect(() => { betStateRef.current = betState; }, [betState]);
   useEffect(() => { betAmountRef.current = betAmount; }, [betAmount]);
-  useEffect(() => { setBalanceRef.current = setBalance; }, [setBalance]);
 
   // UI Updater Interval (approx 20fps for React state)
   useEffect(() => {
@@ -122,6 +128,14 @@ export default function CrashGame({ balance, setBalance, onBack }) {
             
             if (betStateRef.current === 'active') {
               setBetState('idle');
+              addHistoryEntry({
+                game: 'crash',
+                bet: betAmountRef.current,
+                payout: 0,
+                profit: -betAmountRef.current,
+                multiplier: 0,
+                details: { crashPoint: crashPointRef.current }
+              });
             }
           } else {
             multRef.current = newMult;
@@ -129,9 +143,17 @@ export default function CrashGame({ balance, setBalance, onBack }) {
             
             if (betStateRef.current === 'active' && newMult >= autoCashoutRef.current) {
               const winAmt = betAmountRef.current * autoCashoutRef.current;
-              setBalanceRef.current(b => b + winAmt);
+              addToBalance(winAmt);
               setBetState('cashed_out');
               setLastWin(winAmt);
+              addHistoryEntry({
+                game: 'crash',
+                bet: betAmountRef.current,
+                payout: winAmt,
+                profit: winAmt - betAmountRef.current,
+                multiplier: autoCashoutRef.current,
+                details: { crashPoint: crashPointRef.current, autoCashout: autoCashoutRef.current }
+              });
             }
           }
         } else if (phase === 'CRASHED') {
@@ -246,18 +268,28 @@ export default function CrashGame({ balance, setBalance, onBack }) {
   }, []);
 
   const placeBet = () => {
-    if (betAmount > balance) return alert('Insufficient balance');
     if (betAmount <= 0) return;
-    setBalance(b => b - betAmount);
+    const newBal = subtractFromBalance(betAmount);
+    if (newBal === null) return alert('Insufficient balance');
+    setBalanceState(newBal);
     setBetState('placed');
   };
 
   const manualCashout = () => {
     if (betState !== 'active') return;
-    const winAmt = betAmount * currentMultUI;
-    setBalance(b => b + winAmt);
+    const mult = multRef.current;
+    const winAmt = betAmount * mult;
+    addToBalance(winAmt);
     setBetState('cashed_out');
     setLastWin(winAmt);
+    addHistoryEntry({
+      game: 'crash',
+      bet: betAmount,
+      payout: winAmt,
+      profit: winAmt - betAmount,
+      multiplier: mult,
+      details: { crashPoint: crashPointRef.current, manualCashout: true }
+    });
   };
 
   let buttonLabel = 'Place Bet';

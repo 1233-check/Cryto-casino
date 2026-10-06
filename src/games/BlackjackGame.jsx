@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
 import { createDeck, SUIT_COLORS } from '../utils/constants';
+import { shuffleArray } from '../utils/provablyFair';
+import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
 
 const STATES = {
   BETTING: 'BETTING',
@@ -54,6 +56,7 @@ const Card = ({ card, hidden, index }) => {
 };
 
 export default function BlackjackGame({ onBack }) {
+  const [balance, setBalanceState] = useState(getBalance());
   const [gameState, setGameState] = useState(STATES.BETTING);
   const [betAmount, setBetAmount] = useState(10);
   const [activeBet, setActiveBet] = useState(0);
@@ -62,6 +65,14 @@ export default function BlackjackGame({ onBack }) {
   const [dealerHand, setDealerHand] = useState([]);
   const [message, setMessage] = useState('');
   const [isDealerRevealed, setIsDealerRevealed] = useState(false);
+
+  const activeBetRef = useRef(0);
+
+  useEffect(() => {
+    const handleUpdate = () => setBalanceState(getBalance());
+    window.addEventListener('balance-update', handleUpdate);
+    return () => window.removeEventListener('balance-update', handleUpdate);
+  }, []);
 
   const getHandValue = (hand) => {
     let val = 0;
@@ -78,7 +89,13 @@ export default function BlackjackGame({ onBack }) {
   };
 
   const startGame = () => {
-    let newDeck = createDeck(4).map((c, i) => ({ ...c, id: `card-${i}-${Math.random()}` })).sort(() => Math.random() - 0.5);
+    if (betAmount <= 0) return;
+    const newBal = subtractFromBalance(betAmount);
+    if (newBal === null) return alert('Insufficient balance');
+    setBalanceState(newBal);
+
+    const rawDeck = createDeck(4).map((c, i) => ({ ...c, id: `card-${i}-${Math.random()}` }));
+    let newDeck = shuffleArray(rawDeck);
     const p1 = newDeck.pop();
     const d1 = newDeck.pop();
     const p2 = newDeck.pop();
@@ -89,6 +106,7 @@ export default function BlackjackGame({ onBack }) {
     setDealerHand([d1, d2]);
     setGameState(STATES.DEAL);
     setActiveBet(betAmount);
+    activeBetRef.current = betAmount;
     setMessage('');
     setIsDealerRevealed(false);
 
@@ -108,10 +126,36 @@ export default function BlackjackGame({ onBack }) {
     }, 1500);
   };
 
-  const endGame = (msg, type, multiplier = 1) => {
+  const endGame = (msg, type, multParam = 1) => {
      setMessage(msg);
      setGameState(STATES.PAYOUT);
      setIsDealerRevealed(true);
+
+     const bet = activeBetRef.current || betAmount;
+     let payoutMult = 0;
+     if (type === 'push') {
+       payoutMult = 1.0;
+     } else if (type === 'win') {
+       payoutMult = multParam === 1.5 ? 2.5 : 2.0;
+     } else {
+       payoutMult = 0;
+     }
+
+     const payout = parseFloat((bet * payoutMult).toFixed(8));
+     const profit = parseFloat((payout - bet).toFixed(8));
+
+     if (payout > 0) {
+       addToBalance(payout);
+     }
+
+     addHistoryEntry({
+       game: 'blackjack',
+       bet,
+       payout,
+       profit,
+       multiplier: payoutMult,
+       details: { outcome: type, message: msg }
+     });
   };
 
   const playDealerTurn = async (currentDealerHand, currentDeck, finalPlayerVal) => {
@@ -162,12 +206,20 @@ export default function BlackjackGame({ onBack }) {
   };
 
   const doubleDown = () => {
+    if (gameState !== STATES.PLAYER_TURN || playerHand.length !== 2) return;
+    const newBal = subtractFromBalance(betAmount);
+    if (newBal === null) return alert('Insufficient balance to double down');
+    setBalanceState(newBal);
+
+    const doubledBet = activeBet + betAmount;
+    setActiveBet(doubledBet);
+    activeBetRef.current = doubledBet;
+
     let newDeck = [...deck];
     const card = newDeck.pop();
     setDeck(newDeck);
     const newHand = [...playerHand, card];
     setPlayerHand(newHand);
-    setActiveBet(b => b * 2);
 
     const val = getHandValue(newHand);
     if (val > 21) {
@@ -237,7 +289,7 @@ export default function BlackjackGame({ onBack }) {
   );
 
   return (
-    <GameLayout title="Blackjack" onBack={onBack} controls={controls}>
+    <GameLayout title="Blackjack" balance={balance} onBack={onBack} controls={controls}>
       <div className="flex-1 flex flex-col items-center justify-between py-12 px-4 relative min-h-[500px]">
         
         {/* Dealer Area */}
