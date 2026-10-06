@@ -59,6 +59,8 @@ export default function CrashGame({ onBack }) {
     return () => clearInterval(interval);
   }, []);
 
+  const rocketSpriteRef = useRef(null);
+
   useEffect(() => {
     let app = new PIXI.Application();
     let isDestroyed = false;
@@ -91,14 +93,42 @@ export default function CrashGame({ onBack }) {
       graphicsGlowRef.current = graphicsGlow;
       graphicsParticlesRef.current = graphicsParticles;
 
+      // Load Rocket Sprite
+      try {
+        const texture = await PIXI.Assets.load('/assets/rocket.jpg');
+        const rocket = new PIXI.Sprite(texture);
+        rocket.anchor.set(0.5);
+        rocket.scale.set(0.15); // Scale down 1024x1024 to game size
+        rocket.blendMode = 'screen'; // Make the black background transparent!
+        rocket.visible = false;
+        graphContainer.addChild(rocket);
+        rocketSpriteRef.current = rocket;
+      } catch (e) {
+        console.error("Failed to load rocket sprite:", e);
+      }
+
       startTimeRef.current = Date.now();
       phaseRef.current = 'WAITING';
       setGamePhase('WAITING');
+
+      let shakeAmount = 0;
 
       app.ticker.add(() => {
         const now = Date.now();
         const phase = phaseRef.current;
         const elapsedSinceStart = now - startTimeRef.current;
+
+        // Apply Screen Shake
+        if (shakeAmount > 0) {
+          app.stage.x = (Math.random() - 0.5) * shakeAmount;
+          app.stage.y = (Math.random() - 0.5) * shakeAmount;
+          shakeAmount *= 0.9;
+          if (shakeAmount < 0.5) {
+            shakeAmount = 0;
+            app.stage.x = 0;
+            app.stage.y = 0;
+          }
+        }
 
         if (phase === 'WAITING') {
           if (elapsedSinceStart >= 5000) {
@@ -125,6 +155,7 @@ export default function CrashGame({ onBack }) {
             setGamePhase('CRASHED');
             startTimeRef.current = now;
             multRef.current = crashPointRef.current;
+            shakeAmount = 30; // Trigger massive screen shake on crash!
             
             if (betStateRef.current === 'active') {
               setBetState('idle');
@@ -182,6 +213,7 @@ export default function CrashGame({ onBack }) {
       const gBase = graphicsBaseRef.current;
       const gGlow = graphicsGlowRef.current;
       const gParts = graphicsParticlesRef.current;
+      const rocket = rocketSpriteRef.current;
 
       gBase.clear();
       gGlow.clear();
@@ -193,6 +225,23 @@ export default function CrashGame({ onBack }) {
       const phase = phaseRef.current;
       const isCrashed = phase === 'CRASHED';
       const color = isCrashed ? 0xFF3B30 : 0x00E701;
+
+      if (rocket) {
+        if (phase === 'WAITING') {
+          rocket.visible = false;
+        } else {
+          rocket.visible = true;
+          // When crashed, fade out the rocket or tint it red
+          if (isCrashed) {
+             rocket.tint = 0xFF3B30;
+             rocket.alpha -= 0.05;
+             if (rocket.alpha < 0) rocket.alpha = 0;
+          } else {
+             rocket.tint = 0xFFFFFF;
+             rocket.alpha = 1;
+          }
+        }
+      }
 
       if (phase === 'WAITING') {
         gBase.moveTo(0, h * 0.9);
@@ -214,26 +263,41 @@ export default function CrashGame({ onBack }) {
         for (let i = 1; i < pts.length; i++) {
           gBase.lineTo(mapX(pts[i].x), mapY(pts[i].y));
         }
-        gBase.stroke({ width: 4, color });
+        gBase.stroke({ width: 6, color });
 
         // Glow
         gGlow.moveTo(mapX(pts[0].x), mapY(pts[0].y));
         for (let i = 1; i < pts.length; i++) {
           gGlow.lineTo(mapX(pts[i].x), mapY(pts[i].y));
         }
-        gGlow.stroke({ width: 12, color, alpha: 0.2 });
+        gGlow.stroke({ width: 16, color, alpha: 0.3 });
 
-        // Particles
+        const headX = mapX(pts[pts.length - 1].x);
+        const headY = mapY(pts[pts.length - 1].y);
+
+        // Update Rocket Position & Rotation
+        if (rocket && pts.length > 1) {
+           rocket.x = headX;
+           rocket.y = headY;
+           
+           // Calculate trajectory angle
+           const prevX = mapX(pts[pts.length - 2].x);
+           const prevY = mapY(pts[pts.length - 2].y);
+           // Add a slight offset to rotation since the rocket image points diagonally up-right (approx -45 degrees)
+           // We want to align its nose with the velocity vector.
+           const angle = Math.atan2(headY - prevY, headX - prevX);
+           // If the image is drawn pointing up-right, we offset it so it aligns correctly
+           rocket.rotation = angle + Math.PI/4; 
+        }
+
+        // Particles (Engine Exhaust)
         if (!isCrashed) {
-          const headX = mapX(pts[pts.length - 1].x);
-          const headY = mapY(pts[pts.length - 1].y);
-
-          if (Math.random() < 0.6) {
+          if (Math.random() < 0.8) {
             particlesRef.current.push({
               x: headX,
               y: headY,
-              vx: -1 - Math.random() * 2,
-              vy: (Math.random() - 0.5) * 2,
+              vx: -2 - Math.random() * 4,
+              vy: (Math.random() - 0.5) * 3 + 1,
               life: 1.0
             });
           }
@@ -244,11 +308,11 @@ export default function CrashGame({ onBack }) {
         let p = particlesRef.current[i];
         p.x += p.vx;
         p.y += p.vy;
-        p.life -= 0.03;
+        p.life -= 0.04;
         if (p.life <= 0) {
           particlesRef.current.splice(i, 1);
         } else {
-          gParts.circle(p.x, p.y, 4 * p.life).fill({ color, alpha: p.life });
+          gParts.circle(p.x, p.y, 6 * p.life).fill({ color, alpha: p.life * 0.8 });
         }
       }
     };

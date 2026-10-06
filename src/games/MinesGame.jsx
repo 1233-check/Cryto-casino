@@ -239,18 +239,20 @@ export default function MinesGame({ onBack }) {
 }
 
 function Tile({ state, onClick, disabled }) {
-  const getStyle = () => {
+  const isHidden = state === 'hidden' || state === 'faded-safe';
+  
+  const getBackgroundStyle = () => {
     switch (state) {
       case 'hidden':
-        return 'bg-[#2F4553] hover:bg-[#3d5566] hover:-translate-y-0.5 hover:shadow-[0_6px_0_rgba(0,0,0,0.3)] shadow-[0_4px_0_rgba(0,0,0,0.3)] active:translate-y-1 active:shadow-none cursor-pointer';
+        return 'bg-gradient-to-br from-[#2F4553] to-[#1A2C38] hover:brightness-125 cursor-pointer shadow-[0_6px_0_rgba(15,33,46,1)] hover:-translate-y-1 active:translate-y-1 active:shadow-none';
       case 'safe':
         return 'bg-[#0F212E] border-2 border-[#00E701] shadow-[inset_0_0_20px_rgba(0,231,1,0.2)] cursor-default';
       case 'mine':
-        return 'bg-[#0F212E] border-2 border-[#ff3b30] shadow-[inset_0_0_20px_rgba(255,59,48,0.2)] cursor-default';
+        return 'bg-[#0F212E] border-2 border-[#ff3b30] shadow-[inset_0_0_30px_rgba(255,59,48,0.4)] cursor-default';
       case 'faded-mine':
         return 'bg-[#0F212E] opacity-50 cursor-default border border-white/5';
       case 'faded-safe':
-        return 'bg-[#2F4553] opacity-30 cursor-default';
+        return 'bg-gradient-to-br from-[#2F4553] to-[#1A2C38] opacity-30 cursor-default shadow-[0_6px_0_rgba(15,33,46,1)]';
       default:
         return 'bg-[#2F4553] cursor-pointer';
     }
@@ -260,44 +262,64 @@ function Tile({ state, onClick, disabled }) {
     <button
       disabled={disabled || state !== 'hidden'}
       onClick={onClick}
-      className={`rounded-lg flex items-center justify-center transition-all duration-200 w-full h-full relative ${getStyle()}`}
+      style={{ perspective: '1000px' }}
+      className={`rounded-xl flex items-center justify-center transition-all duration-300 w-full h-full relative ${getBackgroundStyle()}`}
     >
-      <div className="absolute inset-0 bg-white/[0.02] rounded-lg pointer-events-none" />
+      {/* 3D Inner Bevel for Hidden Tiles */}
+      {isHidden && (
+        <div className="absolute inset-1 rounded-lg border-t border-l border-white/10 border-b border-r border-black/40 pointer-events-none" />
+      )}
+      
       <AnimatePresence>
         {state === 'safe' && (
           <motion.div
-            initial={{ scale: 0, rotate: -45 }}
-            animate={{ scale: 1, rotate: 0 }}
-            className="flex items-center justify-center absolute inset-0"
+            initial={{ rotateY: 180, scale: 0.5, opacity: 0 }}
+            animate={{ rotateY: 0, scale: 1.2, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+            className="flex items-center justify-center absolute inset-0 z-10"
           >
-            <Diamond className="w-8 h-8 text-[#00E701] drop-shadow-[0_0_10px_rgba(0,231,1,0.8)] fill-[#00E701]/20" />
+            <img 
+              src="/assets/gem.jpg" 
+              alt="Safe Gem" 
+              className="w-full h-full object-cover mix-blend-screen drop-shadow-[0_0_15px_rgba(0,231,1,0.5)]" 
+            />
           </motion.div>
         )}
+        
         {state === 'mine' && (
           <motion.div
-            initial={{ scale: 0, rotate: 45 }}
-            animate={{ scale: 1, rotate: 0 }}
-            className="flex items-center justify-center absolute inset-0"
+            initial={{ scale: 0, rotate: -45 }}
+            animate={{ scale: 1.5, rotate: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 12 }}
+            className="flex items-center justify-center absolute inset-0 z-20"
           >
-            <Bomb className="w-8 h-8 text-[#ff3b30] drop-shadow-[0_0_10px_rgba(255,59,48,0.8)]" />
+            <img 
+              src="/assets/bomb.jpg" 
+              alt="Exploding Mine" 
+              className="w-full h-full object-cover mix-blend-screen drop-shadow-[0_0_20px_rgba(255,59,48,0.8)]" 
+            />
+            
+            {/* Flash Overlay on Mine Hit */}
+            <motion.div 
+               initial={{ opacity: 1 }}
+               animate={{ opacity: 0 }}
+               transition={{ duration: 1 }}
+               className="absolute inset-0 bg-white mix-blend-overlay rounded-lg pointer-events-none"
+            />
           </motion.div>
         )}
+        
         {state === 'faded-mine' && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            animate={{ opacity: 0.6 }}
             className="flex items-center justify-center absolute inset-0"
           >
-            <Bomb className="w-6 h-6 text-white/30" />
-          </motion.div>
-        )}
-        {state === 'faded-safe' && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex items-center justify-center absolute inset-0"
-          >
-            <Diamond className="w-6 h-6 text-white/30 fill-white/10" />
+            <img 
+              src="/assets/bomb.jpg" 
+              alt="Mine" 
+              className="w-[80%] h-[80%] object-cover mix-blend-screen grayscale" 
+            />
           </motion.div>
         )}
       </AnimatePresence>
