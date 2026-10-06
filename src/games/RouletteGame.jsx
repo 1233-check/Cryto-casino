@@ -69,66 +69,127 @@ export default function RouletteGame({ onBack }) {
       app.stage.addChild(wheel);
       wheelRef.current = wheel;
 
-      // Outer rim
+      // Mahogany Wood Rim
+      const woodGradient = new PIXI.FillGradient(0, -wheelRadius - 30, 0, wheelRadius + 30);
+      woodGradient.addColorStop(0, 0x5C2B14);
+      woodGradient.addColorStop(0.5, 0x3D1B0B);
+      woodGradient.addColorStop(1, 0x2A1206);
+
       const rim = new PIXI.Graphics();
-      rim.circle(0, 0, wheelRadius + 24);
-      rim.fill(0x0F212E);
-      rim.stroke({ width: 6, color: 0x2A3F54 });
+      rim.circle(0, 0, wheelRadius + 30);
+      rim.fill(woodGradient);
+      // Gold Outer Ring
+      rim.stroke({ width: 6, color: 0xFFD700, alpha: 0.8 });
       wheel.addChild(rim);
+
+      // Gold Inner Rim
+      const goldGradient = new PIXI.FillGradient(-wheelRadius, -wheelRadius, wheelRadius, wheelRadius);
+      goldGradient.addColorStop(0, 0xFFE066);
+      goldGradient.addColorStop(0.5, 0xB8860B);
+      goldGradient.addColorStop(1, 0xFFE066);
 
       const innerRim = new PIXI.Graphics();
       innerRim.circle(0, 0, wheelRadius + 18);
-      innerRim.stroke({ width: 2, color: 0xFFD700, alpha: 0.8 });
+      innerRim.stroke({ width: 8, fill: goldGradient });
       wheel.addChild(innerRim);
 
       for (let i = 0; i < 37; i++) {
         const num = ROULETTE_SEQUENCE[i];
         const isRed = RED_NUMBERS.has(num);
-        const color = num === 0 ? 0x00C001 : isRed ? 0xED4163 : 0x1A2C38;
+        const color = num === 0 ? 0x00E701 : isRed ? 0xED4163 : 0x1A2C38;
         
         const slice = new PIXI.Graphics();
         slice.moveTo(0, 0);
         slice.arc(0, 0, wheelRadius, i * arc, (i + 1) * arc);
         slice.fill(color);
-        slice.stroke({ width: 1, color: 0xFFFFFF, alpha: 0.15 });
+        slice.stroke({ width: 2, color: 0x000000, alpha: 0.5 }); // Dark separators
         wheel.addChild(slice);
 
         const text = new PIXI.Text(num.toString(), {
           fontFamily: 'system-ui',
-          fontSize: wheelRadius * 0.12,
+          fontSize: wheelRadius * 0.14,
           fill: 0xFFFFFF,
-          fontWeight: '900'
+          fontWeight: '900',
+          dropShadow: true,
+          dropShadowColor: 0x000000,
+          dropShadowAlpha: 0.5,
+          dropShadowDistance: 2
         });
         text.anchor.set(0.5);
         const textAngle = i * arc + arc / 2;
-        text.x = Math.cos(textAngle) * (wheelRadius * 0.82);
-        text.y = Math.sin(textAngle) * (wheelRadius * 0.82);
+        text.x = Math.cos(textAngle) * (wheelRadius * 0.85);
+        text.y = Math.sin(textAngle) * (wheelRadius * 0.85);
         text.rotation = textAngle + Math.PI / 2;
         wheel.addChild(text);
       }
 
-      // Center dome
+      // Deflector Diamonds (around the track)
+      for (let i = 0; i < 8; i++) {
+        const deflectorAngle = (i * Math.PI * 2) / 8;
+        const dx = Math.cos(deflectorAngle) * (wheelRadius + 7);
+        const dy = Math.sin(deflectorAngle) * (wheelRadius + 7);
+        
+        const deflector = new PIXI.Graphics();
+        // Draw a small diamond
+        deflector.poly([-4, 0, 0, -8, 4, 0, 0, 8]);
+        deflector.fill(0xAAAAAA); // Silver deflectors
+        deflector.stroke({ width: 1, color: 0xFFFFFF });
+        deflector.x = dx;
+        deflector.y = dy;
+        deflector.rotation = deflectorAngle + Math.PI/2;
+        wheel.addChild(deflector);
+      }
+
+      // Center dome (Gold/Brass Turret)
+      const turretGradient = new PIXI.FillGradient(-wheelRadius*0.3, -wheelRadius*0.3, wheelRadius*0.3, wheelRadius*0.3);
+      turretGradient.addColorStop(0, 0xFFE066);
+      turretGradient.addColorStop(0.5, 0xDAA520);
+      turretGradient.addColorStop(1, 0x8B6508);
+
       const center = new PIXI.Graphics();
-      center.circle(0, 0, wheelRadius * 0.3);
-      center.fill(0x213743);
-      center.stroke({ width: 3, color: 0xFFD700 });
+      center.circle(0, 0, wheelRadius * 0.35);
+      center.fill(turretGradient);
+      center.stroke({ width: 2, color: 0x5C2B14 }); // Wood trim around turret
+      
+      // Turret star/arms
+      center.moveTo(0, 0);
+      for(let i=0; i<4; i++) {
+         const armAngle = (i * Math.PI * 2) / 4;
+         center.moveTo(0, 0);
+         center.lineTo(Math.cos(armAngle) * (wheelRadius * 0.35), Math.sin(armAngle) * (wheelRadius * 0.35));
+      }
+      center.stroke({ width: 6, color: 0x5C2B14 });
       wheel.addChild(center);
 
       // Pointer (at top)
       const pointer = new PIXI.Graphics();
-      pointer.poly([-12, 0, 12, 0, 0, 24]);
-      pointer.fill(0xFFFFFF);
+      pointer.poly([-15, 0, 15, 0, 0, 30]);
+      pointer.fill(0xFFD700); // Gold pointer
+      pointer.stroke({ width: 2, color: 0x000000 });
       pointer.x = app.screen.width / 2;
-      pointer.y = app.screen.height / 2 - 20 - wheelRadius - 25;
+      pointer.y = app.screen.height / 2 - 20 - wheelRadius - 35;
       app.stage.addChild(pointer);
 
-      // Ball
+      // Realistic 3D Ball
+      const ballContainer = new PIXI.Container();
+      
+      const ballShadow = new PIXI.Graphics();
+      ballShadow.circle(2, 2, 8);
+      ballShadow.fill({ color: 0x000000, alpha: 0.5 });
+      
+      const ballGradient = new PIXI.FillGradient(-6, -6, 6, 6);
+      ballGradient.addColorStop(0, 0xFFFFFF);
+      ballGradient.addColorStop(0.6, 0xDDDDDD);
+      ballGradient.addColorStop(1, 0x999999);
+
       const ball = new PIXI.Graphics();
-      ball.circle(0, 0, 7);
-      ball.fill(0xFFFFFF);
-      ball.visible = false;
-      wheel.addChild(ball);
-      ballRef.current = ball;
+      ball.circle(0, 0, 7.5);
+      ball.fill(ballGradient);
+      
+      ballContainer.addChild(ballShadow, ball);
+      ballContainer.visible = false;
+      wheel.addChild(ballContainer);
+      ballRef.current = ballContainer;
     };
 
     initPixi();
@@ -227,22 +288,32 @@ export default function RouletteGame({ onBack }) {
       const now = performance.now();
       const t = Math.min((now - startTime) / spinDuration, 1);
       
-      // Easing out cubic for both wheel and ball
+      // Easing out cubic for wheel
       const easeT = 1 - Math.pow(1 - t, 3);
       
       wheel.rotation = initialWheelRot + (finalWheelRot - initialWheelRot) * easeT;
       
       const currentWorldBall = initialWorldBall + (finalWorldBall - initialWorldBall) * easeT;
-      const ballLocalAngle = currentWorldBall - wheel.rotation;
+      let ballLocalAngle = currentWorldBall - wheel.rotation;
       
       const R_out = wheelRadius + 15;
       const R_in = wheelRadius * 0.75;
-      let currentR = R_out - (R_out - R_in) * easeT;
+      let currentR = R_out - (R_out - R_in) * Math.pow(t, 2); // Drops in faster
       
-      if (t > 0.6) {
-         const bounceT = (t - 0.6) / 0.4;
-         const bounceAmt = Math.abs(Math.sin(bounceT * Math.PI * 4)) * 15 * (1 - bounceT);
+      if (t > 0.5) {
+         // Chaotic bouncing phase (simulating hitting deflectors and frets)
+         const bounceT = (t - 0.5) / 0.5;
+         
+         // Base bounce is a decaying sine wave
+         const bounceAmt = Math.abs(Math.sin(bounceT * Math.PI * 8)) * 25 * Math.pow(1 - bounceT, 2);
          currentR -= bounceAmt;
+         
+         // Add erratic angular jitter when the ball is "high" in a bounce
+         if (bounceAmt > 5) {
+            // Random jitter that decays as it settles
+            const jitter = (Math.random() - 0.5) * 0.2 * Math.pow(1 - bounceT, 2);
+            ballLocalAngle += jitter;
+         }
       }
       
       ball.x = Math.cos(ballLocalAngle) * currentR;

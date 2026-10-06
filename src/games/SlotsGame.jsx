@@ -90,11 +90,27 @@ export default function SlotsGame({ onBack }) {
       mainContainer.y = (app.screen.height - gameHeight) / 2;
       app.stage.addChild(mainContainer);
 
+      // Metallic Bezel Background
+      const bezelOuter = new PIXI.Graphics();
+      bezelOuter.roundRect(-20, -20, gameWidth + 40, gameHeight + 40, 24);
+      const bezelOuterGradient = new PIXI.FillGradient(0, -20, 0, gameHeight + 40);
+      bezelOuterGradient.addColorStop(0, 0x555555);
+      bezelOuterGradient.addColorStop(0.5, 0x888888);
+      bezelOuterGradient.addColorStop(1, 0x333333);
+      bezelOuter.fill(bezelOuterGradient);
+      bezelOuter.stroke({ color: 0x222222, width: 4 });
+      mainContainer.addChild(bezelOuter);
+      
+      const bezelInner = new PIXI.Graphics();
+      bezelInner.roundRect(-10, -10, gameWidth + 20, gameHeight + 20, 16);
+      bezelInner.fill(0x000000);
+      bezelInner.stroke({ color: 0xFFD700, width: 4, alpha: 0.8 }); // Gold inner trim
+      mainContainer.addChild(bezelInner);
+
       // Background
       const bg = new PIXI.Graphics();
       bg.roundRect(0, 0, gameWidth, gameHeight, 16);
       bg.fill({ color: 0x1A2C38 });
-      bg.stroke({ color: 0xFFFFFF, alpha: 0.1, width: 2 });
       mainContainer.addChild(bg);
 
       // Mask
@@ -108,14 +124,14 @@ export default function SlotsGame({ onBack }) {
       linesContainerRef.current = linesContainer;
 
       const style = new PIXI.TextStyle({
-        fontFamily: 'Arial',
-        fontSize: Math.round(SYMBOL_SIZE * 0.6),
+        fontFamily: 'system-ui',
+        fontSize: Math.round(SYMBOL_SIZE * 0.65),
         align: 'center',
-        dropShadow: {
-            alpha: 0.3,
-            blur: 2,
-            distance: 2
-        }
+        dropShadow: true,
+        dropShadowAlpha: 0.5,
+        dropShadowBlur: 4,
+        dropShadowDistance: 4,
+        dropShadowColor: 0x000000
       });
 
       const reels = [];
@@ -123,6 +139,15 @@ export default function SlotsGame({ onBack }) {
         const rc = new PIXI.Container();
         rc.x = i * REEL_WIDTH;
         mainContainer.addChild(rc);
+        
+        // Reel dividers
+        if (i > 0) {
+           const divider = new PIXI.Graphics();
+           divider.moveTo(0, 0);
+           divider.lineTo(0, gameHeight);
+           divider.stroke({ width: 2, color: 0xFFFFFF, alpha: 0.1 });
+           rc.addChild(divider);
+        }
 
         const blur = new PIXI.BlurFilter();
         blur.blurX = 0;
@@ -150,11 +175,13 @@ export default function SlotsGame({ onBack }) {
           targetSymbols: [], // 3 final symbols
           stopStartY: 0,
           stopTimer: 0,
+          isTeaser: false
         });
       }
       reelsRef.current = reels;
       mainContainer.addChild(linesContainer);
 
+      // ... ticker code ...
       app.ticker.add((ticker) => {
         const delta = ticker.deltaTime;
         const elapsedMS = ticker.elapsedMS;
@@ -171,7 +198,10 @@ export default function SlotsGame({ onBack }) {
           allStopped = false;
 
           if (r.phase === 'spinning') {
-            r.speed = Math.min(r.speed + 2 * delta, 40); // Accelerate to max speed
+            const targetSpeed = r.isTeaser ? 15 : 40; // Teaser rolls much slower
+            if (r.speed < targetSpeed) r.speed = Math.min(r.speed + 2 * delta, targetSpeed);
+            if (r.speed > targetSpeed) r.speed = Math.max(r.speed - 1 * delta, targetSpeed);
+            
             r.blur.blurY = r.speed * 0.5;
 
             // Move symbols
@@ -192,10 +222,7 @@ export default function SlotsGame({ onBack }) {
               r.stopTimer = 0;
               r.blur.blurY = 0;
               
-              // Set up for exact stop.
-              // We arrange the 6 symbols such that the first 3 (indices 0,1,2) will land exactly at y = 0, SYMBOL_SIZE, 2*SYMBOL_SIZE
-              // We put them at negative positions proportional to stop distance.
-              const stopDistance = SYMBOL_SIZE * 3; // slide down by 3 symbol sizes
+              const stopDistance = SYMBOL_SIZE * 3;
               
               for (let j = 0; j < SYMBOLS_PER_REEL; j++) {
                  const sym = r.symbols[j];
@@ -223,13 +250,11 @@ export default function SlotsGame({ onBack }) {
             
             for (let j = 0; j < SYMBOLS_PER_REEL; j++) {
                 const sym = r.symbols[j];
-                // Base starting position + eased distance
                 sym.y = (j * SYMBOL_SIZE) - stopDistance + (stopDistance * ease);
             }
           }
         }
         
-        // If all reels just became idle, evaluate wins
         if (allStopped && isPlayingRef.current) {
           if (onReelsStoppedRef.current) {
             const cb = onReelsStoppedRef.current;
@@ -262,24 +287,30 @@ export default function SlotsGame({ onBack }) {
       while (linesContainerRef.current.children.length > 0) {
         const child = linesContainerRef.current.children[0];
         linesContainerRef.current.removeChild(child);
-        if (child.destroy) {
-          child.destroy({ children: true });
-        }
+        if (child.destroy) child.destroy({ children: true });
       }
     }
 
     const reels = reelsRef.current;
-    const finalResult = []; // 5 columns, each 3 symbols
+    const finalResult = [];
     
     const now = Date.now();
     for (let i = 0; i < REELS_COUNT; i++) {
-        // Generate results (3 visible symbols)
         const col = [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()];
         finalResult.push(col);
         
         reels[i].phase = 'spinning';
         reels[i].speed = 0;
-        reels[i].stopTime = now + 1000 + (i * 300); // L to R stagger
+        
+        // Add dramatic teasers for the 4th and 5th reels!
+        if (i >= 3) {
+           reels[i].stopTime = now + 1000 + (3 * 300) + ((i - 3) * 1500); // 1.5 second extra delay per final reel
+           reels[i].isTeaser = true;
+        } else {
+           reels[i].stopTime = now + 1000 + (i * 300); 
+           reels[i].isTeaser = false;
+        }
+        
         reels[i].targetSymbols = col;
     }
 

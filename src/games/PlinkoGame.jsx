@@ -56,6 +56,11 @@ export default function PlinkoGame({ onBack }) {
     const ctx = canvas.getContext('2d');
     let animationFrameId;
     let lastTime = performance.now();
+    
+    // Store shockwaves: { x, y, radius, maxRadius, alpha }
+    const shockwaves = [];
+    // Store ball trails: { x, y, life, color }
+    const trails = [];
 
     const render = (time) => {
       const dt = time - lastTime;
@@ -65,7 +70,24 @@ export default function PlinkoGame({ onBack }) {
       
       for (let i = ballsRef.current.length - 1; i >= 0; i--) {
         const ball = ballsRef.current[i];
+        
+        const prevRow = Math.floor(ball.progress);
         ball.progress += speed;
+        const currentRow = Math.floor(ball.progress);
+        
+        // Trigger shockwave on peg hit
+        if (currentRow > prevRow && currentRow >= 0 && currentRow < ball.rowsAtCreation) {
+           const b_rowSpacing = 420 / ball.rowsAtCreation;
+           const b_H_SPACING = 550 / ball.rowsAtCreation;
+           
+           let j = 0;
+           for (let idx = 0; idx < currentRow; idx++) j += ball.path[idx];
+           
+           const px = GAME_WIDTH/2 - (currentRow * b_H_SPACING / 2) + j * b_H_SPACING;
+           const py = 80 + currentRow * b_rowSpacing;
+           
+           shockwaves.push({ x: px, y: py, radius: 4, maxRadius: 20, alpha: 0.8 });
+        }
         
         if (ball.progress >= ball.rowsAtCreation) {
           addToBalance(ball.payout);
@@ -90,6 +112,20 @@ export default function PlinkoGame({ onBack }) {
         }
       }
       
+      // Update shockwaves
+      for (let i = shockwaves.length - 1; i >= 0; i--) {
+         const sw = shockwaves[i];
+         sw.radius += dt * 0.05;
+         sw.alpha -= dt * 0.002;
+         if (sw.alpha <= 0) shockwaves.splice(i, 1);
+      }
+      
+      // Update trails
+      for (let i = trails.length - 1; i >= 0; i--) {
+         trails[i].life -= dt * 0.002;
+         if (trails[i].life <= 0) trails.splice(i, 1);
+      }
+      
       for (let i = floatingTextsRef.current.length - 1; i >= 0; i--) {
         const ft = floatingTextsRef.current[i];
         ft.life -= dt / 1000;
@@ -105,8 +141,10 @@ export default function PlinkoGame({ onBack }) {
       const rowSpacing = 420 / rows;
       const H_SPACING = 550 / rows;
       
-      // Draw pegs
-      ctx.fillStyle = '#B1BAD3';
+      // Draw pegs with neon glow
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#00E701';
+      ctx.fillStyle = '#FFFFFF';
       for (let r = 0; r < rows; r++) {
         for (let j = 0; j <= r; j++) {
           const x = GAME_WIDTH/2 - (r * H_SPACING / 2) + j * H_SPACING;
@@ -115,6 +153,16 @@ export default function PlinkoGame({ onBack }) {
           ctx.arc(x, y, Math.max(3, 5 - rows/4), 0, Math.PI * 2);
           ctx.fill();
         }
+      }
+      ctx.shadowBlur = 0; // Reset shadow
+      
+      // Draw shockwaves
+      for (const sw of shockwaves) {
+         ctx.beginPath();
+         ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+         ctx.strokeStyle = `rgba(0, 231, 1, ${Math.max(0, sw.alpha)})`;
+         ctx.lineWidth = 2;
+         ctx.stroke();
       }
       
       // Draw buckets
@@ -146,6 +194,14 @@ export default function PlinkoGame({ onBack }) {
         ctx.textBaseline = 'middle';
         ctx.font = 'bold 11px sans-serif';
         ctx.fillText(`${multipliers[j]}x`, x, bucketY + bucketHeight/2);
+      }
+      
+      // Draw trails
+      for (const t of trails) {
+         ctx.beginPath();
+         ctx.arc(t.x, t.y, 4 * t.life, 0, Math.PI * 2);
+         ctx.fillStyle = `rgba(255, 215, 0, ${t.life * 0.5})`;
+         ctx.fill();
       }
       
       // Draw balls
@@ -181,22 +237,27 @@ export default function PlinkoGame({ onBack }) {
           by = y0 + t * (y1 - y0) - arcY;
         }
         
-        // Ball glow
-        const gradient = ctx.createRadialGradient(bx, by, 0, bx, by, 8);
-        gradient.addColorStop(0, '#ffffff');
-        gradient.addColorStop(0.5, '#00E701');
-        gradient.addColorStop(1, 'rgba(0, 231, 1, 0)');
+        // Add to trails
+        if (Math.random() < 0.5) {
+           trails.push({ x: bx, y: by, life: 1.0 });
+        }
         
+        // Photorealistic Gold Metallic 3D Shader (Canvas Radial Gradient)
+        const radius = 9;
+        const gradient = ctx.createRadialGradient(bx - radius*0.3, by - radius*0.3, radius*0.1, bx, by, radius);
+        gradient.addColorStop(0, '#FFFFFF'); // Specular pure white highlight
+        gradient.addColorStop(0.3, '#FFD700'); // Bright gold
+        gradient.addColorStop(0.7, '#DAA520'); // Mid gold
+        gradient.addColorStop(0.9, '#8B6508'); // Dark rim shadow
+        gradient.addColorStop(1, '#3B2F00'); // Ambient occlusion rim
+        
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = 'rgba(255, 215, 0, 0.4)'; // Gold glow
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(bx, by, 8, 0, Math.PI * 2);
+        ctx.arc(bx, by, radius, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Ball inner core
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(bx, by, 4, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.shadowBlur = 0;
       }
       
       // Draw floating texts
