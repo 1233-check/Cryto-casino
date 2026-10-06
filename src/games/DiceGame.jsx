@@ -111,17 +111,25 @@ export default function DiceGame({ onBack }) {
         <div className="w-full bg-[#0F212E] p-6 sm:p-10 rounded-2xl relative shadow-2xl border border-white/5">
           
           {/* Large Roll Result Display */}
-          <div className="flex flex-col items-center justify-center mb-16">
+          <div className="flex flex-col items-center justify-center mb-16 relative">
+            {/* Background glowing halo behind the number */}
+            <motion.div 
+               animate={{ opacity: hasRolled ? 0.3 : 0, scale: hasRolled ? 1.5 : 1 }}
+               className={`absolute w-32 h-32 rounded-full blur-3xl pointer-events-none ${
+                 !hasRolled ? 'bg-transparent' : (condition === 'over' ? result > target : result < target) ? 'bg-[#00E701]' : 'bg-[#E9113C]'
+               }`}
+            />
             <motion.div 
               key={hasRolled ? result : 'init'}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className={`text-6xl sm:text-8xl font-bold font-display drop-shadow-lg ${
+              initial={{ scale: 0.5, y: -20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className={`text-7xl sm:text-9xl font-black font-display drop-shadow-2xl relative z-10 ${
                 !hasRolled 
-                  ? 'text-white' 
+                  ? 'text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]' 
                   : (condition === 'over' ? result > target : result < target) 
-                    ? 'text-[#00E701]' 
-                    : 'text-[#E9113C]'
+                    ? 'text-[#00E701] drop-shadow-[0_0_30px_rgba(0,231,1,0.6)]' 
+                    : 'text-[#E9113C] drop-shadow-[0_0_30px_rgba(233,17,60,0.6)]'
               }`}
             >
               {result.toFixed(2)}
@@ -129,29 +137,29 @@ export default function DiceGame({ onBack }) {
           </div>
 
           {/* The Slider */}
-          <div className="relative h-16 w-full flex items-center select-none group">
+          <div className="relative h-20 w-full flex items-center select-none group mt-10">
             
-            {/* Background Track */}
-            <div className="absolute w-full h-4 rounded-full overflow-hidden flex shadow-inner bg-surface">
+            {/* Background 3D Metallic Track */}
+            <div className="absolute w-full h-8 rounded-full overflow-hidden flex bg-gradient-to-b from-[#0a151d] to-[#162734] border border-white/5 shadow-[inset_0_5px_15px_rgba(0,0,0,0.8)]">
               {condition === 'over' ? (
                 <>
-                  <div className="h-full bg-[#E9113C] transition-all duration-200" style={{ width: `${target}%` }} />
-                  <div className="h-full bg-[#00E701] transition-all duration-200" style={{ width: `${100 - target}%` }} />
+                  <div className="h-full bg-gradient-to-r from-[#8a0a24] to-[#E9113C] transition-all duration-200 border-r-2 border-white/20" style={{ width: `${target}%` }} />
+                  <div className="h-full bg-gradient-to-r from-[#00E701] to-[#008a01] transition-all duration-200 border-l-2 border-black/40" style={{ width: `${100 - target}%` }} />
                 </>
               ) : (
                 <>
-                  <div className="h-full bg-[#00E701] transition-all duration-200" style={{ width: `${target}%` }} />
-                  <div className="h-full bg-[#E9113C] transition-all duration-200" style={{ width: `${100 - target}%` }} />
+                  <div className="h-full bg-gradient-to-r from-[#008a01] to-[#00E701] transition-all duration-200 border-r-2 border-white/20" style={{ width: `${target}%` }} />
+                  <div className="h-full bg-gradient-to-r from-[#E9113C] to-[#8a0a24] transition-all duration-200 border-l-2 border-black/40" style={{ width: `${100 - target}%` }} />
                 </>
               )}
             </div>
 
             {/* Target markers */}
-            <div className="absolute w-full h-full pointer-events-none flex justify-between items-center px-1">
+            <div className="absolute w-full h-full pointer-events-none flex justify-between items-center px-2">
               {[0, 25, 50, 75, 100].map(val => (
-                <div key={val} className="flex flex-col items-center mt-12">
-                   <div className="w-1 h-2 bg-white/20 mb-1 rounded" />
-                   <span className="text-xs text-[#B1BAD3] font-display">{val}</span>
+                <div key={val} className="flex flex-col items-center mt-16">
+                   <div className="w-1.5 h-3 bg-white/20 mb-1 rounded shadow-inner" />
+                   <span className="text-sm text-[#B1BAD3] font-display font-bold">{val}</span>
                 </div>
               ))}
             </div>
@@ -164,36 +172,42 @@ export default function DiceGame({ onBack }) {
               step="0.01"
               value={target}
               onChange={(e) => setTarget(parseFloat(e.target.value))}
-              className="absolute w-full h-12 opacity-0 cursor-pointer z-30 m-0"
+              className="absolute w-full h-20 opacity-0 cursor-pointer z-30 m-0"
               disabled={isRolling}
             />
 
-            {/* Target Thumb */}
+            {/* Target Thumb (3D Glowing Orb) */}
             <div 
-              className="absolute top-1/2 w-12 h-12 bg-white rounded-xl shadow-xl pointer-events-none z-20 flex items-center justify-center transition-all duration-200 border-4 border-[#0F212E]"
-              style={{ left: `${target}%`, transform: 'translate(-50%, -50%)' }}
+              className="absolute top-1/2 w-14 h-14 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.8)] pointer-events-none z-20 flex items-center justify-center transition-all duration-200"
+              style={{ 
+                left: `${target}%`, 
+                transform: 'translate(-50%, -50%)',
+                background: 'radial-gradient(circle at 30% 30%, #ffffff 0%, #B1BAD3 20%, #2A3F4C 80%, #0F212E 100%)',
+                border: '2px solid rgba(255,255,255,0.2)'
+              }}
             >
-              {/* Grip lines */}
-              <div className="flex gap-1">
-                <div className="w-1 h-4 bg-gray-300 rounded-full" />
-                <div className="w-1 h-4 bg-gray-300 rounded-full" />
-              </div>
-              
               {/* Value Tooltip */}
-              <div className="absolute -top-12 bg-[#213743] text-white font-bold font-display px-3 py-1.5 rounded-lg text-sm shadow-xl whitespace-nowrap border border-white/5">
+              <div className="absolute -top-16 bg-[#0F212E] text-white font-black font-display px-4 py-2 rounded-xl text-lg shadow-[0_10px_20px_rgba(0,0,0,0.5)] whitespace-nowrap border-2 border-white/10">
                 {target.toFixed(2)}
-                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#213743] rotate-45 border-r border-b border-white/5" />
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#0F212E] rotate-45 border-r-2 border-b-2 border-white/10" />
               </div>
             </div>
 
-            {/* Result Marker (Animated) */}
+            {/* Result Marker (Rolling Die) */}
             <motion.div
-              animate={{ left: `${result}%`, opacity: hasRolled ? 1 : 0 }}
-              transition={{ type: "spring", damping: 15, stiffness: 150 }}
-              className="absolute top-1/2 w-8 h-8 bg-white border-4 border-[#0F212E] rounded-full shadow-2xl pointer-events-none z-20 flex items-center justify-center"
-              style={{ transform: 'translate(-50%, -50%)' }}
+              animate={{ 
+                 left: `${result}%`, 
+                 opacity: hasRolled ? 1 : 0,
+                 rotate: hasRolled ? result * 10 : 0 // Physical rotation based on distance travelled
+              }}
+              transition={{ type: "spring", damping: 12, stiffness: 100 }}
+              className="absolute top-1/2 w-10 h-10 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.8)] pointer-events-none z-20 flex items-center justify-center border-4 border-[#0F212E]"
+              style={{ 
+                transform: 'translate(-50%, -50%)',
+                background: 'radial-gradient(circle at 30% 30%, #ffffff 0%, #dddddd 100%)',
+              }}
             >
-              <div className="w-2 h-2 bg-[#0F212E] rounded-full" />
+              <div className="w-3 h-3 bg-[#0F212E] rounded-full shadow-inner" />
             </motion.div>
           </div>
 

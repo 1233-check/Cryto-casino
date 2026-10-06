@@ -104,18 +104,18 @@ export default function ColorTradingGame({ onBack }) {
     const colors = COLOR_MAP[num].colors;
     let bgClass = '';
     if (colors.includes('red') && colors.includes('violet')) {
-      bgClass = 'bg-gradient-to-br from-[#ED4163] to-[#B388FF] text-white border-[#B388FF]/50';
+      bgClass = 'bg-gradient-to-br from-[#ED4163] to-[#B388FF] text-white border-[#B388FF] shadow-[0_0_20px_rgba(179,136,255,0.4)]';
     } else if (colors.includes('green') && colors.includes('violet')) {
-      bgClass = 'bg-gradient-to-br from-[#00E701] to-[#B388FF] text-white border-[#B388FF]/50';
+      bgClass = 'bg-gradient-to-br from-[#00E701] to-[#B388FF] text-white border-[#B388FF] shadow-[0_0_20px_rgba(0,231,1,0.4)]';
     } else if (colors.includes('red')) {
-      bgClass = 'bg-[#ED4163]/20 text-[#ED4163] border-[#ED4163]/50';
+      bgClass = 'bg-[#ED4163]/20 text-[#ED4163] border-[#ED4163] shadow-[0_0_15px_rgba(237,65,99,0.3)]';
     } else if (colors.includes('green')) {
-      bgClass = 'bg-[#00E701]/20 text-[#00E701] border-[#00E701]/50';
+      bgClass = 'bg-[#00E701]/20 text-[#00E701] border-[#00E701] shadow-[0_0_15px_rgba(0,231,1,0.3)]';
     }
     
-    return `relative p-4 rounded-xl font-display font-bold text-xl border-2 transition-all overflow-hidden
-            hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-1 
-            active:translate-y-0 shadow-inner ${bgClass}`;
+    return `relative p-4 rounded-xl font-display font-black text-2xl border-2 transition-all overflow-hidden
+            hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-1 
+            active:translate-y-0 backdrop-blur-md ${bgClass}`;
   };
 
   const getResultColorClass = (num) => {
@@ -171,30 +171,30 @@ export default function ColorTradingGame({ onBack }) {
         </label>
         <div className="grid grid-cols-3 gap-3 mb-6">
           <button 
-            className="relative p-4 rounded-xl font-bold border-2 transition-colors flex flex-col items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed border-[#00E701]/30 bg-[#00E701]/10 text-[#00E701] hover:bg-[#00E701]/20 hover:border-[#00E701]/50 hover:-translate-y-1 active:translate-y-0"
+            className="relative p-4 rounded-xl font-bold border-2 transition-all flex flex-col items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed border-[#00E701] bg-[#00E701]/10 text-[#00E701] hover:bg-[#00E701]/20 shadow-[0_0_15px_rgba(0,231,1,0.3)] hover:shadow-[0_0_25px_rgba(0,231,1,0.6)] hover:-translate-y-1 active:translate-y-0"
             onClick={() => placeBet('color', 'green')}
             disabled={phase !== 'betting'}
           >
-            <span className="mb-1 text-2xl drop-shadow-md">🟢</span>
-            <span className="tracking-wide">Green</span>
+            <span className="mb-1 text-2xl drop-shadow-[0_0_10px_rgba(0,231,1,0.8)]">🟢</span>
+            <span className="tracking-wide uppercase font-black">Green</span>
             {renderChip('color-green')}
           </button>
           <button 
-            className="relative p-4 rounded-xl font-bold border-2 transition-colors flex flex-col items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed border-[#B388FF]/30 bg-[#B388FF]/10 text-[#B388FF] hover:bg-[#B388FF]/20 hover:border-[#B388FF]/50 hover:-translate-y-1 active:translate-y-0"
+            className="relative p-4 rounded-xl font-bold border-2 transition-all flex flex-col items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed border-[#B388FF] bg-[#B388FF]/10 text-[#B388FF] hover:bg-[#B388FF]/20 shadow-[0_0_15px_rgba(179,136,255,0.3)] hover:shadow-[0_0_25px_rgba(179,136,255,0.6)] hover:-translate-y-1 active:translate-y-0"
             onClick={() => placeBet('color', 'violet')}
             disabled={phase !== 'betting'}
           >
-            <span className="mb-1 text-2xl drop-shadow-md">🟣</span>
-            <span className="tracking-wide">Violet</span>
+            <span className="mb-1 text-2xl drop-shadow-[0_0_10px_rgba(179,136,255,0.8)]">🟣</span>
+            <span className="tracking-wide uppercase font-black">Violet</span>
             {renderChip('color-violet')}
           </button>
           <button 
-            className="relative p-4 rounded-xl font-bold border-2 transition-colors flex flex-col items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed border-[#ED4163]/30 bg-[#ED4163]/10 text-[#ED4163] hover:bg-[#ED4163]/20 hover:border-[#ED4163]/50 hover:-translate-y-1 active:translate-y-0"
+            className="relative p-4 rounded-xl font-bold border-2 transition-all flex flex-col items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed border-[#ED4163] bg-[#ED4163]/10 text-[#ED4163] hover:bg-[#ED4163]/20 shadow-[0_0_15px_rgba(237,65,99,0.3)] hover:shadow-[0_0_25px_rgba(237,65,99,0.6)] hover:-translate-y-1 active:translate-y-0"
             onClick={() => placeBet('color', 'red')}
             disabled={phase !== 'betting'}
           >
-            <span className="mb-1 text-2xl drop-shadow-md">🔴</span>
-            <span className="tracking-wide">Red</span>
+            <span className="mb-1 text-2xl drop-shadow-[0_0_10px_rgba(237,65,99,0.8)]">🔴</span>
+            <span className="tracking-wide uppercase font-black">Red</span>
             {renderChip('color-red')}
           </button>
         </div>
@@ -233,22 +233,56 @@ export default function ColorTradingGame({ onBack }) {
 
   return (
     <GameLayout title="Color Trading" balance={balance} onBack={onBack} controls={controls}>
-      <div className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-8 bg-gradient-to-b from-[#0F212E] to-[#1A2C38]/50">
+      <div className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-8 bg-gradient-to-b from-[#0F212E] to-[#1A2C38]/50 overflow-hidden">
         
+        {/* Animated Background Sine Wave (Simulating Live Trading Data) */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none flex items-center justify-center">
+           <svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 1000 200">
+             <motion.path 
+                d="M 0 100 Q 125 50 250 100 T 500 100 T 750 100 T 1000 100"
+                fill="transparent"
+                stroke="#00E701"
+                strokeWidth="2"
+                animate={{
+                   d: [
+                      "M 0 100 Q 125 50 250 100 T 500 100 T 750 100 T 1000 100",
+                      "M 0 100 Q 125 150 250 100 T 500 100 T 750 100 T 1000 100",
+                      "M 0 100 Q 125 50 250 100 T 500 100 T 750 100 T 1000 100"
+                   ]
+                }}
+                transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+             />
+             <motion.path 
+                d="M 0 100 Q 250 150 500 100 T 1000 100"
+                fill="transparent"
+                stroke="#ED4163"
+                strokeWidth="2"
+                animate={{
+                   d: [
+                      "M 0 100 Q 250 150 500 100 T 1000 100",
+                      "M 0 100 Q 250 50 500 100 T 1000 100",
+                      "M 0 100 Q 250 150 500 100 T 1000 100"
+                   ]
+                }}
+                transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+             />
+           </svg>
+        </div>
+
         {/* Profit/Loss Notification */}
         <AnimatePresence>
           {profit !== null && phase === 'result' && (
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: -20, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0 }}
-              className={`absolute top-8 left-1/2 -translate-x-1/2 px-8 py-3 rounded-2xl font-black text-2xl border-2 shadow-2xl z-30 backdrop-blur-md flex flex-col items-center
-                ${profit > 0 ? 'bg-[#00E701]/20 text-[#00E701] border-[#00E701]/30' : 
-                  profit < 0 ? 'bg-[#ED4163]/20 text-[#ED4163] border-[#ED4163]/30' : 
-                  'bg-[#2F4553]/80 text-white border-white/10'}`}
+              className={`absolute top-8 left-1/2 -translate-x-1/2 px-10 py-4 rounded-3xl font-black text-3xl border-4 shadow-2xl z-30 backdrop-blur-xl flex flex-col items-center
+                ${profit > 0 ? 'bg-[#00E701]/20 text-[#00E701] border-[#00E701] shadow-[0_0_50px_rgba(0,231,1,0.5)]' : 
+                  profit < 0 ? 'bg-[#ED4163]/20 text-[#ED4163] border-[#ED4163] shadow-[0_0_50px_rgba(237,65,99,0.5)]' : 
+                  'bg-[#2F4553]/80 text-white border-white/20'}`}
             >
-              <span className="text-xs uppercase tracking-widest mb-1 font-bold opacity-80">
-                {profit > 0 ? 'You Won' : profit < 0 ? 'You Lost' : 'No Profit'}
+              <span className="text-sm uppercase tracking-[0.2em] mb-1 font-bold opacity-90">
+                {profit > 0 ? 'Trade Won' : profit < 0 ? 'Trade Lost' : 'No Profit'}
               </span>
               {profit > 0 ? '+' : ''}{profit.toFixed(4)}
             </motion.div>
@@ -301,7 +335,17 @@ export default function ColorTradingGame({ onBack }) {
                   exit={{ opacity: 0 }}
                   className="flex flex-col items-center"
                 >
-                  <span className="text-7xl font-display font-black mb-1 tracking-tighter text-white drop-shadow-md">{timeLeft}</span>
+                  <motion.span 
+                    animate={
+                      timeLeft <= 5 
+                        ? { scale: [1, 1.2, 1], color: ['#ffffff', '#ED4163', '#ffffff'] } 
+                        : {}
+                    }
+                    transition={{ repeat: timeLeft <= 5 ? Infinity : 0, duration: 1 }}
+                    className={`text-7xl font-display font-black mb-1 tracking-tighter drop-shadow-md ${timeLeft <= 5 ? 'text-[#ED4163]' : 'text-white'}`}
+                  >
+                    {timeLeft}
+                  </motion.span>
                   <span className="text-[#00E701] font-bold tracking-widest text-sm uppercase">
                     Place Bets
                   </span>
