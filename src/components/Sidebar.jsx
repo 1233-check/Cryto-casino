@@ -1,9 +1,13 @@
 import React from 'react';
-import { Home, Gamepad2, TrendingUp, CircleDot, Bomb, Dice5, Dices, ArrowUpToLine, History, LayoutGrid, Target, Activity } from 'lucide-react';
+import { Home, Gamepad2, TrendingUp, CircleDot, Bomb, Dice5, Dices, ArrowUpToLine, History, LayoutGrid, Target, Activity, LogOut, FileText } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar({ activeView, setActiveView }) {
+  const { user, logout } = useAuth();
+
   const navItems = [
     { id: 'home', label: 'Casino Home', icon: Home, category: 'Main' },
+    { id: 'history', label: 'Game History', icon: FileText, category: 'Main' },
     // Category A - Originals
     { id: 'crash', label: 'Crash', icon: TrendingUp, category: 'Originals' },
     { id: 'dice', label: 'Dice', icon: Dice5, category: 'Originals' },
@@ -64,6 +68,34 @@ export default function Sidebar({ activeView, setActiveView }) {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="p-4 mt-auto border-t border-white/[0.04]">
+        {user ? (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3 px-3 py-2">
+               <img src={user.avatar} alt="Avatar" className="w-8 h-8 rounded-full bg-[#2F4553]" />
+               <div className="flex flex-col overflow-hidden">
+                 <span className="text-sm font-bold text-white truncate">{user.name}</span>
+                 <span className="text-xs text-[#00E701] font-bold">Online</span>
+               </div>
+            </div>
+            <button 
+              onClick={logout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-semibold text-[#B1BAD3] hover:bg-[#ED4163]/10 hover:text-[#ED4163]"
+            >
+              <LogOut className="w-5 h-5" />
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <button 
+            onClick={() => setActiveView('login')}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#1475E1] rounded-xl transition-all font-bold text-white shadow-[0_0_15px_rgba(20,117,225,0.4)] hover:bg-[#1475E1]/80 hover:-translate-y-1"
+          >
+            Sign In with Google
+          </button>
+        )}
       </div>
     </aside>
   );
