@@ -11,7 +11,7 @@ const WALLET_OPTIONS = [
     id: 'trustwallet',
     name: 'Trust Wallet',
     desc: 'Multi-chain mobile wallet',
-    assets: ['ethereum', 'solana', 'usdt', 'usdc', 'btc'],
+    assets: ['ethereum', 'bnb', 'solana', 'usdt', 'usdc', 'btc'],
     color: '#3375BB',
     gradient: 'from-[#3375BB]/20 to-[#1B4F7A]/20',
     borderColor: 'border-[#3375BB]',

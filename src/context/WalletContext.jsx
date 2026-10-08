@@ -27,6 +27,17 @@ export const ASSETS = {
     rpcUrl: 'https://api.mainnet-beta.solana.com',
     explorerUrl: 'https://solscan.io',
   },
+  bnb: {
+    name: 'BNB Chain',
+    symbol: 'BNB',
+    icon: '◆',
+    color: '#F0B90B',
+    chainType: 'evm',
+    decimals: 18,
+    chainId: '0x38',
+    rpcUrl: 'https://bsc-dataseed.binance.org/',
+    explorerUrl: 'https://bscscan.com',
+  },
   usdt: {
     name: 'Tether',
     symbol: 'USDT',
@@ -66,6 +77,7 @@ export const ASSETS = {
 export const DEPOSIT_ADDRESSES = {
   ethereum: '0xYOUR_ETH_DEPOSIT_ADDRESS',
   solana: 'YOUR_SOL_DEPOSIT_ADDRESS',
+  bnb: '0xYOUR_BNB_DEPOSIT_ADDRESS',
   usdt: '0xYOUR_USDT_DEPOSIT_ADDRESS',
   usdc: '0xYOUR_USDC_DEPOSIT_ADDRESS',
   btc: '0xYOUR_BTC_DEPOSIT_ADDRESS',
@@ -84,7 +96,7 @@ export const WalletProvider = ({ children }) => {
     if (typeof window !== 'undefined') {
       // Trust Wallet injects as window.ethereum with isTrust or window.trustwallet
       if (window.trustwallet || window.ethereum?.isTrust) {
-        wallets.push({ id: 'trustwallet', name: 'Trust Wallet', assets: ['ethereum', 'solana', 'usdt', 'usdc', 'btc'] });
+        wallets.push({ id: 'trustwallet', name: 'Trust Wallet', assets: ['ethereum', 'bnb', 'solana', 'usdt', 'usdc', 'btc'] });
       }
       // Generic ethereum provider fallback (e.g., Coinbase Wallet, Brave Wallet)
       if (window.ethereum && !window.ethereum.isMetaMask && !window.ethereum.isTrust && wallets.length === 0) {
