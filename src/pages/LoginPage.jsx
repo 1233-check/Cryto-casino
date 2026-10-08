@@ -90,46 +90,6 @@ export default function LoginPage({ onNavigate }) {
         {/* Wallet Login Options */}
         <div className="w-full space-y-3 mb-6">
           
-          {/* MetaMask */}
-          <button
-            onClick={() => handleWalletLogin('metamask')}
-            disabled={isDisabled}
-            className="w-full relative group overflow-hidden bg-gradient-to-r from-[#F6851B]/10 to-[#E2761B]/10 border border-[#F6851B]/30 hover:border-[#F6851B] text-white font-bold text-sm py-3.5 px-5 rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(246,133,27,0.2)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-          >
-            <div className="flex items-center justify-center gap-3">
-              {activeMethod === 'metamask' ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-[#F6851B] rounded-full animate-spin" />
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 35 33" fill="none">
-                  <path d="M32.96 1L19.7 10.89l2.45-5.81L32.96 1z" fill="#E2761B" stroke="#E2761B" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M2.04 1l13.14 9.98-2.33-5.9L2.04 1z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              )}
-              <span>Continue with MetaMask</span>
-              <span className="ml-auto text-[10px] bg-white/5 text-[#B1BAD3] px-2 py-0.5 rounded-full">ETH</span>
-            </div>
-          </button>
-
-          {/* Phantom */}
-          <button
-            onClick={() => handleWalletLogin('phantom')}
-            disabled={isDisabled}
-            className="w-full relative group overflow-hidden bg-gradient-to-r from-[#AB9FF2]/10 to-[#512DA8]/10 border border-[#AB9FF2]/30 hover:border-[#AB9FF2] text-white font-bold text-sm py-3.5 px-5 rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(171,159,242,0.2)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-          >
-            <div className="flex items-center justify-center gap-3">
-              {activeMethod === 'phantom' ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-[#AB9FF2] rounded-full animate-spin" />
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 128 128" fill="none">
-                  <rect width="128" height="128" rx="26" fill="#AB9FF2"/>
-                  <path d="M110.5 64.6c-1.2 18.2-16.7 32.5-35 32.5H44.8c-2.6 0-4.8-2.1-4.8-4.8 0-.4.1-.8.1-1.2l4.8-29.4c.7-4.3 4.4-7.5 8.8-7.5h32c12.3 0 22.4 9.5 23.4 21.7.1.6.1 1.1.1 1.7" fill="#FFF"/>
-                </svg>
-              )}
-              <span>Continue with Phantom</span>
-              <span className="ml-auto text-[10px] bg-white/5 text-[#B1BAD3] px-2 py-0.5 rounded-full">SOL</span>
-            </div>
-          </button>
-
           {/* Trust Wallet */}
           <button
             onClick={() => handleWalletLogin('trust')}

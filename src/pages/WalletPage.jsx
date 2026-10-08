@@ -1,50 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useWallet, CHAINS, DEPOSIT_ADDRESSES } from '../context/WalletContext';
+import { useWallet, ASSETS, DEPOSIT_ADDRESSES } from '../context/WalletContext';
 import { getBalance } from '../utils/balance';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wallet, ArrowDownToLine, ArrowUpFromLine, Copy, Check, ExternalLink, Shield, AlertTriangle, ChevronDown, X, LinkIcon, Unlink } from 'lucide-react';
 
 const WALLET_OPTIONS = [
   {
-    id: 'metamask',
-    name: 'MetaMask',
-    desc: 'Popular EVM wallet for Chrome',
-    chains: ['ethereum', 'polygon', 'bsc'],
-    color: '#F6851B',
-    gradient: 'from-[#F6851B]/20 to-[#E2761B]/20',
-    borderColor: 'border-[#F6851B]',
-    icon: (
-      <svg width="32" height="32" viewBox="0 0 35 33" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M32.96 1L19.7 10.89l2.45-5.81L32.96 1z" fill="#E2761B" stroke="#E2761B" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M2.04 1l13.14 9.98-2.33-5.9L2.04 1zM28.1 23.7l-3.53 5.4 7.55 2.08 2.17-7.35-6.19-.13zM.67 23.83l2.16 7.35 7.55-2.08-3.53-5.4-6.18.13z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M9.93 14.6l-2.1 3.17 7.48.34-.26-8.04-5.12 4.53zM25.07 14.6l-5.17-4.63-.18 8.14 7.48-.34-2.13-3.17zM10.38 29.1l4.5-2.19-3.89-3.04-.61 5.23zM20.12 26.91l4.5 2.19-.62-5.23-3.88 3.04z" fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
-  },
-  {
-    id: 'phantom',
-    name: 'Phantom',
-    desc: 'Best Solana wallet',
-    chains: ['solana'],
-    color: '#AB9FF2',
-    gradient: 'from-[#512DA8]/20 to-[#311B92]/20',
-    borderColor: 'border-[#AB9FF2]',
-    icon: (
-      <svg width="32" height="32" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="128" height="128" rx="26" fill="url(#phantom_grad)"/>
-        <defs><linearGradient id="phantom_grad" x1="0" y1="0" x2="128" y2="128"><stop stopColor="#534BB1"/><stop offset="1" stopColor="#551BF9"/></linearGradient></defs>
-        <path d="M110.5 64.6c-1.2 18.2-16.7 32.5-35 32.5H44.8c-2.6 0-4.8-2.1-4.8-4.8 0-.4.1-.8.1-1.2l4.8-29.4c.7-4.3 4.4-7.5 8.8-7.5h32c12.3 0 22.4 9.5 23.4 21.7.1.6.1 1.1.1 1.7 0-.4.2-.7.3-1l1-11.5c.8-9.4-6.4-17.6-15.9-17.6H60.3c-4.4 0-8.1 3.2-8.8 7.5L44 96.6c-.3 2-.1 3.9.5 5.7-9.9-3.5-17-13.1-17-24.3 0-14.3 11.6-25.9 25.9-25.9h33.2c13.9 0 24.9 11.7 23.9 25.5z" fill="#FFF"/>
-        <circle cx="63" cy="72" r="5" fill="#4A3D8F"/>
-        <circle cx="83" cy="72" r="5" fill="#4A3D8F"/>
-      </svg>
-    ),
-  },
-  {
     id: 'trustwallet',
     name: 'Trust Wallet',
     desc: 'Multi-chain mobile wallet',
-    chains: ['ethereum', 'polygon', 'bsc', 'solana'],
+    assets: ['ethereum', 'solana', 'usdt', 'usdc', 'btc'],
     color: '#3375BB',
     gradient: 'from-[#3375BB]/20 to-[#1B4F7A]/20',
     borderColor: 'border-[#3375BB]',
@@ -124,7 +90,7 @@ export default function WalletPage({ onNavigate }) {
       });
 
       setStatus('success');
-      setStatusMessage(`Successfully deposited ${numAmount} ${CHAINS[selectedChain].symbol}`);
+      setStatusMessage(`Successfully deposited ${numAmount} ${ASSETS[selectedChain].symbol}`);
 
       setTimeout(() => {
         setStatus(null);
@@ -190,7 +156,7 @@ export default function WalletPage({ onNavigate }) {
       });
 
       setStatus('success');
-      setStatusMessage(`Withdrawal of ${numAmount} ${CHAINS[selectedChain].symbol} is being processed`);
+      setStatusMessage(`Withdrawal of ${numAmount} ${ASSETS[selectedChain].symbol} is being processed`);
       setTimeout(() => setStatus(null), 5000);
     } catch (err) {
       setStatus('error');
@@ -210,7 +176,7 @@ export default function WalletPage({ onNavigate }) {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
-  const chainConfig = CHAINS[selectedChain];
+  const chainConfig = ASSETS[selectedChain];
 
   return (
     <div className="flex flex-col h-full bg-[#0F212E] text-white p-4 sm:p-8 w-full max-w-5xl mx-auto">
@@ -243,7 +209,7 @@ export default function WalletPage({ onNavigate }) {
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 bg-[#00E701] rounded-full animate-pulse shadow-[0_0_10px_#00E701]" />
             <span className="font-bold text-sm text-white">
-              {connectedWallet === 'metamask' ? 'MetaMask' : connectedWallet === 'phantom' ? 'Phantom' : 'Trust Wallet'}
+              Trust Wallet
             </span>
             <span className="text-[#B1BAD3] font-mono text-sm">{formatAddress(walletAddress)}</span>
           </div>
@@ -296,7 +262,7 @@ export default function WalletPage({ onNavigate }) {
                 Connect Your Wallet
               </h2>
               <p className="text-sm text-[#B1BAD3] mb-5">Choose a wallet to connect for deposits and withdrawals</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="flex justify-center max-w-sm mx-auto">
                 {WALLET_OPTIONS.map((w) => (
                   <button
                     key={w.id}
@@ -312,9 +278,9 @@ export default function WalletPage({ onNavigate }) {
                       <p className="text-[10px] text-[#B1BAD3] mt-0.5">{w.desc}</p>
                     </div>
                     <div className="flex gap-1 flex-wrap justify-center">
-                      {w.chains.map(c => (
+                      {w.assets.map(c => (
                         <span key={c} className="text-[9px] bg-white/5 text-[#B1BAD3] px-2 py-0.5 rounded-full font-bold uppercase">
-                          {CHAINS[c].symbol}
+                          {ASSETS[c].symbol}
                         </span>
                       ))}
                     </div>
@@ -353,10 +319,10 @@ export default function WalletPage({ onNavigate }) {
                         exit={{ opacity: 0, y: -5 }}
                         className="absolute top-full mt-2 left-0 right-0 bg-[#0F212E] border border-white/10 rounded-xl overflow-hidden z-30 shadow-2xl"
                       >
-                        {Object.entries(CHAINS)
+                        {Object.entries(ASSETS)
                           .filter(([key]) => {
                             const wallet = WALLET_OPTIONS.find(w => w.id === connectedWallet);
-                            return wallet?.chains.includes(key);
+                            return wallet?.assets.includes(key);
                           })
                           .map(([key, chain]) => (
                           <button
@@ -573,7 +539,7 @@ export default function WalletPage({ onNavigate }) {
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-white text-sm">{tx.amount} {CHAINS[tx.chain]?.symbol}</span>
+                      <span className="font-bold text-white text-sm">{tx.amount} {ASSETS[tx.chain]?.symbol}</span>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                         tx.status === 'confirmed' ? 'bg-[#00E701]/10 text-[#00E701]' : 'bg-[#F0B90B]/10 text-[#F0B90B]'
                       }`}>
