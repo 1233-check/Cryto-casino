@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import GameGrid from './components/GameGrid';
 import AIChatWidget from './components/AIChatWidget';
 import { AuthProvider } from './context/AuthContext';
+import { WalletProvider } from './context/WalletContext';
 
 // New Pages
 import LoginPage from './pages/LoginPage';
@@ -125,25 +126,29 @@ function App() {
   if (activeView === 'login') {
      return (
        <AuthProvider>
-         <div className="flex h-screen bg-[#0F212E] text-white overflow-hidden font-sans">
-           {renderContent()}
-         </div>
+         <WalletProvider>
+           <div className="flex h-screen bg-[#0F212E] text-white overflow-hidden font-sans">
+             {renderContent()}
+           </div>
+         </WalletProvider>
        </AuthProvider>
      );
   }
 
   return (
     <AuthProvider>
-      <div className="flex h-screen bg-[#0F212E] text-white overflow-hidden font-sans">
-        <Sidebar activeView={activeView} setActiveView={setActiveView} />
-        <div className="flex-1 flex flex-col min-w-0">
-          <Navbar />
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar relative">
-            {renderContent()}
-          </main>
+      <WalletProvider>
+        <div className="flex h-screen bg-[#0F212E] text-white overflow-hidden font-sans">
+          <Sidebar activeView={activeView} setActiveView={setActiveView} />
+          <div className="flex-1 flex flex-col min-w-0">
+            <Navbar />
+            <main className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar relative">
+              {renderContent()}
+            </main>
+          </div>
+          <AIChatWidget />
         </div>
-        <AIChatWidget />
-      </div>
+      </WalletProvider>
     </AuthProvider>
   );
 }

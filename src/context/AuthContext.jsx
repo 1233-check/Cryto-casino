@@ -1,4 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { auth, db } from '../firebase';
+import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -9,36 +12,56 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check local storage for mock user
-    const storedUser = localStorage.getItem('crypto_casino_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // Ensure user document exists in Firestore
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        const userSnap = await getDoc(userRef);
+        
+        let userData = {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || 'Player',
+          email: firebaseUser.email,
+          avatar: firebaseUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${firebaseUser.uid}`,
+        };
+
+        if (!userSnap.exists()) {
+          // Initialize new user with default balance
+          await setDoc(userRef, {
+            ...userData,
+            balance: 1.00000000,
+            createdAt: new Date().toISOString()
+          });
+        }
+        setUser(userData);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const loginWithGoogle = async () => {
-    // Simulate OAuth popup delay
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const mockUser = {
-          id: 'google-uid-12345',
-          name: 'Player One',
-          email: 'player@example.com',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Player',
-        };
-        setUser(mockUser);
-        localStorage.setItem('crypto_casino_user', JSON.stringify(mockUser));
-        resolve(mockUser);
-      }, 1500);
-    });
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      return result.user;
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('crypto_casino_user');
-    if (typeof window !== 'undefined') {
-      window.location.hash = 'login';
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      if (typeof window !== 'undefined') {
+        window.location.hash = 'login';
+      }
+    } catch (error) {
+      console.error('Logout failed:', error);
     }
   };
 

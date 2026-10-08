@@ -1,7 +1,27 @@
-// Balance manager with localStorage persistence
-const BALANCE_KEY = 'cryptobet_balance';
+import { auth, db } from '../firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
+
+// Balance manager with Firestore real-time sync
 const HISTORY_KEY = 'cryptobet_history';
 const DEFAULT_BALANCE = 1.00000000;
+
+let currentBalance = DEFAULT_BALANCE;
+
+// Listen for Auth changes to attach Firestore listener
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    const userRef = doc(db, 'users', user.uid);
+    onSnapshot(userRef, (docSnap) => {
+      if (docSnap.exists()) {
+        currentBalance = docSnap.data().balance || 0;
+        dispatchBalanceUpdate(currentBalance);
+      }
+    });
+  } else {
+    currentBalance = DEFAULT_BALANCE;
+    dispatchBalanceUpdate(currentBalance);
+  }
+});
 
 function dispatchBalanceUpdate(balance) {
   if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
@@ -17,13 +37,16 @@ function dispatchBalanceUpdate(balance) {
 }
 
 export function getBalance() {
-  const stored = localStorage.getItem(BALANCE_KEY);
-  return stored ? parseFloat(stored) : DEFAULT_BALANCE;
+  return currentBalance;
 }
 
+// These client-side mutators are now DEPRECATED. 
+// Balance changes should happen strictly on the backend.
+// We keep them returning values so the UI doesn't crash before the backend call completes,
+// but they no longer mutate localStorage. They will be overwritten by the next Firestore snapshot.
 export function setBalance(amount) {
   const clamped = Math.max(0, parseFloat(amount.toFixed(8)));
-  localStorage.setItem(BALANCE_KEY, clamped.toString());
+  currentBalance = clamped;
   dispatchBalanceUpdate(clamped);
   return clamped;
 }
@@ -42,7 +65,7 @@ export function resetBalance() {
   return setBalance(DEFAULT_BALANCE);
 }
 
-// Bet history
+// Bet history (Temporarily keeping in localStorage until backend history endpoint is fully wired for the UI)
 export function getHistory() {
   try {
     return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');

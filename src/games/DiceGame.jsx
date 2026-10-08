@@ -26,24 +26,41 @@ export default function DiceGame({ onBack }) {
   const multiplier = 99 / winChance;
   const profitOnWin = betAmount * multiplier - betAmount;
 
-  const handleRoll = () => {
+  const handleRoll = async () => {
     if (isRolling || betAmount <= 0) return;
-    const newBal = subtractFromBalance(betAmount);
-    if (newBal === null) return alert('Insufficient balance');
-    setBalanceState(newBal);
+    
+    // Get current auth token (you'd normally pull this from AuthContext, 
+    // but for simplicity we can get it from the firebase auth instance)
+    const { auth } = await import('../firebase');
+    if (!auth.currentUser) return alert('Must be logged in to bet');
+    const token = await auth.currentUser.getIdToken();
+
     setIsRolling(true);
     
-    // Quick timeout to allow UI to show rolling state
-    setTimeout(() => {
-      const roll = getGameResult(0, 100);
-      const won = condition === 'over' ? roll > target : roll < target;
-      const payout = won ? parseFloat((betAmount * multiplier).toFixed(8)) : 0;
-      const profit = parseFloat((payout - betAmount).toFixed(8));
+    try {
+      const response = await fetch('http://localhost:3001/api/bet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          game: 'dice',
+          betAmount,
+          target,
+          condition
+        })
+      });
 
-      if (won && payout > 0) {
-        addToBalance(payout);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Bet failed');
       }
 
+      const { roll, won, payout, profit } = data;
+
+      // The balance will auto-update via Firestore listener, but we can update history locally
       addHistoryEntry({
         game: 'dice',
         bet: betAmount,
@@ -55,7 +72,6 @@ export default function DiceGame({ onBack }) {
 
       setResult(roll);
       setHasRolled(true);
-      setIsRolling(false);
       
       setHistory(prev => [{ 
         roll, 
@@ -64,7 +80,12 @@ export default function DiceGame({ onBack }) {
         won, 
         id: Date.now() 
       }, ...prev].slice(0, 8));
-    }, 150);
+
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setIsRolling(false);
+    }
   };
 
   const controls = (

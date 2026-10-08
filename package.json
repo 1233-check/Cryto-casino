@@ -10,13 +10,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@solana/spl-token": "^0.4.15",
+    "@solana/web3.js": "^1.99.0",
     "date-fns": "^4.4.0",
+    "ethers": "^6.17.0",
+    "firebase": "^13.0.0",
     "framer-motion": "^11.1.7",
     "howler": "^2.2.4",
     "lucide-react": "^0.378.0",
     "pixi.js": "^8.1.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "socket.io-client": "^4.8.4"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",
