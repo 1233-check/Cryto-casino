@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useWallet, ASSETS, DEPOSIT_ADDRESSES } from '../context/WalletContext';
 import { getBalance } from '../utils/balance';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Wallet, ArrowDownToLine, ArrowUpFromLine, Copy, Check, ExternalLink, Shield, AlertTriangle, ChevronDown, X, LinkIcon, Unlink } from 'lucide-react';
+import { Wallet, ArrowDownToLine, ArrowUpFromLine, Copy, Check, ExternalLink, Shield, AlertTriangle, ChevronDown, X, LinkIcon, Unlink, QrCode } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 const WALLET_OPTIONS = [
   {
@@ -377,10 +378,24 @@ export default function WalletPage({ onNavigate }) {
               {activeTab === 'deposit' && (
                 <>
                   {/* Deposit Address */}
+                  {/* Deposit Address */}
                   <div className="mb-6">
                     <label className="text-xs font-bold text-[#B1BAD3] uppercase tracking-wider mb-3 block">
                       Deposit Address ({chainConfig.name})
                     </label>
+                    
+                    <div className="bg-[#0F212E] border border-white/10 rounded-xl p-5 mb-4 flex flex-col items-center justify-center">
+                      <div className="bg-white p-3 rounded-xl mb-3 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                        <QRCodeSVG 
+                          value={DEPOSIT_ADDRESSES[selectedChain] || ''} 
+                          size={150} 
+                          level="H" 
+                          includeMargin={false}
+                        />
+                      </div>
+                      <p className="text-xs text-[#B1BAD3] text-center max-w-xs">Scan this QR code from your mobile wallet to quickly send {chainConfig.symbol}.</p>
+                    </div>
+
                     <div className="flex gap-2">
                       <div className="flex-1 bg-[#0F212E] border border-white/10 rounded-xl px-4 py-3 font-mono text-sm text-[#B1BAD3] truncate">
                         {DEPOSIT_ADDRESSES[selectedChain]}
