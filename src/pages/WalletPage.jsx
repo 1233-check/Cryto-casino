@@ -11,7 +11,7 @@ const WALLET_OPTIONS = [
     id: 'trustwallet',
     name: 'Trust Wallet',
     desc: 'Multi-chain mobile wallet',
-    assets: ['ethereum', 'bnb', 'solana', 'usdt', 'usdc', 'btc'],
+    assets: ['ethereum', 'bnb', 'solana', 'usdt', 'btc'],
     color: '#3375BB',
     gradient: 'from-[#3375BB]/20 to-[#1B4F7A]/20',
     borderColor: 'border-[#3375BB]',
@@ -409,13 +409,19 @@ export default function WalletPage({ onNavigate }) {
                     </div>
                   </div>
 
-                  <button
-                    onClick={handleDeposit}
-                    disabled={status === 'loading' || !parseFloat(amount)}
-                    className="w-full bg-gradient-to-r from-[#00E701] to-[#00c701] text-black font-bold py-4 rounded-xl transition-all hover:shadow-[0_0_30px_rgba(0,231,1,0.3)] disabled:opacity-50 disabled:cursor-not-allowed text-lg uppercase tracking-wider"
-                  >
-                    {status === 'loading' ? 'Processing...' : `Deposit ${amount} ${chainConfig.symbol}`}
-                  </button>
+                  {ASSETS[selectedChain].chainType === 'bitcoin' ? (
+                    <div className="w-full bg-[#1A2C38] text-[#B1BAD3] font-bold py-4 rounded-xl text-center text-sm border border-[#F0B90B]/30">
+                      Please send Bitcoin manually to the address above.
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleDeposit}
+                      disabled={status === 'loading' || !parseFloat(amount)}
+                      className="w-full bg-gradient-to-r from-[#00E701] to-[#00c701] text-black font-bold py-4 rounded-xl transition-all hover:shadow-[0_0_30px_rgba(0,231,1,0.3)] disabled:opacity-50 disabled:cursor-not-allowed text-lg uppercase tracking-wider"
+                    >
+                      {status === 'loading' ? 'Processing...' : `Deposit ${amount} ${chainConfig.symbol}`}
+                    </button>
+                  )}
                 </>
               )}
 

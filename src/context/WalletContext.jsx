@@ -49,38 +49,23 @@ export const ASSETS = {
     rpcUrl: 'https://bsc-dataseed.binance.org/',
     explorerUrl: 'https://bscscan.com',
   },
-  usdc: {
-    name: 'USD Coin',
-    symbol: 'USDC',
-    icon: '💲',
-    color: '#2775CA',
-    chainType: 'evm',
-    decimals: 6,
-    chainId: '0x1',
-    rpcUrl: 'https://mainnet.infura.io/v3/',
-    explorerUrl: 'https://etherscan.io',
-  },
   btc: {
-    name: 'Bitcoin (Wrapped)',
+    name: 'Bitcoin',
     symbol: 'BTC',
     icon: '₿',
     color: '#F7931A',
-    chainType: 'evm',
+    chainType: 'bitcoin',
     decimals: 8,
-    chainId: '0x1',
-    rpcUrl: 'https://mainnet.infura.io/v3/',
-    explorerUrl: 'https://etherscan.io',
   }
 };
 
 // Deposit wallet addresses (Replace with your real addresses!)
 export const DEPOSIT_ADDRESSES = {
-  ethereum: '0xYOUR_ETH_DEPOSIT_ADDRESS',
-  solana: 'YOUR_SOL_DEPOSIT_ADDRESS',
-  bnb: '0xYOUR_BNB_DEPOSIT_ADDRESS',
-  usdt: '0xYOUR_USDT_DEPOSIT_ADDRESS',
-  usdc: '0xYOUR_USDC_DEPOSIT_ADDRESS',
-  btc: '0xYOUR_BTC_DEPOSIT_ADDRESS',
+  ethereum: '0x4ed00a37bbc8e271051baa35a985e0d214d9f931',
+  solana: 'E7LuuFxDCQYjk1oBLJMB2ybJUdE3pFY7dVFmPthcCium',
+  bnb: '0x4ed00a37bbc8e271051baa35a985e0d214d9f931',
+  usdt: '0x51FEaA09995b78AF1D647BE71c14663dA1dE9b68',
+  btc: 'bc1qsef0x4s0sm8n8x5vws2nvy4va6u3dmnkcc6ctm',
 };
 
 export const WalletProvider = ({ children }) => {
@@ -96,7 +81,7 @@ export const WalletProvider = ({ children }) => {
     if (typeof window !== 'undefined') {
       // Trust Wallet injects as window.ethereum with isTrust or window.trustwallet
       if (window.trustwallet || window.ethereum?.isTrust) {
-        wallets.push({ id: 'trustwallet', name: 'Trust Wallet', assets: ['ethereum', 'bnb', 'solana', 'usdt', 'usdc', 'btc'] });
+        wallets.push({ id: 'trustwallet', name: 'Trust Wallet', assets: ['ethereum', 'bnb', 'solana', 'usdt', 'btc'] });
       }
       // Generic ethereum provider fallback (e.g., Coinbase Wallet, Brave Wallet)
       if (window.ethereum && !window.ethereum.isMetaMask && !window.ethereum.isTrust && wallets.length === 0) {
