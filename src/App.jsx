@@ -11,6 +11,7 @@ import LoginPage from './pages/LoginPage';
 import WalletPage from './pages/WalletPage';
 import HistoryPage from './pages/HistoryPage';
 import AdminPage from './pages/AdminPage';
+import AdminLoginPage from './pages/AdminLoginPage';
 
 // Phase 1
 import CrashGame from './games/CrashGame';
@@ -36,7 +37,7 @@ import BaccaratGame from './games/BaccaratGame';
 import VideoPokerGame from './games/VideoPokerGame';
 
 const VALID_VIEWS = [
-  'home', 'login', 'wallet', 'history', 'admin',
+  'home', 'login', 'wallet', 'history', 'admin', 'admin-login',
   'crash', 'dice', 'mines', 'limbo',
   'colortrading', 'plinko', 'tower', 'hilo', 'keno', 'wheel',
   'roulette', 'slots', 'blackjack', 'baccarat', 'videopoker'
@@ -95,6 +96,7 @@ function App() {
       case 'login': return <LoginPage onNavigate={setActiveView} />;
       case 'wallet': return <WalletPage onNavigate={setActiveView} />;
       case 'history': return <HistoryPage onNavigate={setActiveView} />;
+      case 'admin-login': return <AdminLoginPage onNavigate={setActiveView} />;
       case 'admin': return <AdminPage onNavigate={setActiveView} />;
 
       // Phase 1
