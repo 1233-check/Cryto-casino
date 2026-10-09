@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '../firebase';
-import { signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
@@ -41,25 +41,14 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     });
 
-    // Check for redirect result when the page loads after Google Auth
-    getRedirectResult(auth).then((result) => {
-      if (result?.user) {
-        // Successful login via redirect!
-        console.log("Logged in via redirect successfully!");
-      }
-    }).catch((error) => {
-      console.error("Redirect login error:", error);
-      alert("Login Error: " + error.message);
-    });
-
     return () => unsubscribe();
   }, []);
 
   const loginWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      // Use redirect instead of popup to completely bypass COOP and mobile popup blockers
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      return result.user;
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
