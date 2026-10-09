@@ -39,15 +39,15 @@ export const ASSETS = {
     explorerUrl: 'https://bscscan.com',
   },
   usdt: {
-    name: 'Tether',
+    name: 'Tether (BEP20)',
     symbol: 'USDT',
     icon: '💵',
     color: '#26A17B',
-    chainType: 'evm', // simplified for demo
-    decimals: 6,
-    chainId: '0x1',
-    rpcUrl: 'https://mainnet.infura.io/v3/',
-    explorerUrl: 'https://etherscan.io',
+    chainType: 'evm',
+    decimals: 18, // BEP20 USDT uses 18 decimals (ERC20 uses 6)
+    chainId: '0x38',
+    rpcUrl: 'https://bsc-dataseed.binance.org/',
+    explorerUrl: 'https://bscscan.com',
   },
   usdc: {
     name: 'USD Coin',
