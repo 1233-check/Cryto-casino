@@ -8,6 +8,7 @@ import { WalletProvider } from './context/WalletContext';
 
 // New Pages
 import LoginPage from './pages/LoginPage';
+import AccountPage from './pages/AccountPage';
 import WalletPage from './pages/WalletPage';
 import HistoryPage from './pages/HistoryPage';
 import AdminPage from './pages/AdminPage';
@@ -37,7 +38,7 @@ import BaccaratGame from './games/BaccaratGame';
 import VideoPokerGame from './games/VideoPokerGame';
 
 const VALID_VIEWS = [
-  'home', 'login', 'wallet', 'history', 'admin', 'admin-login',
+  'home', 'account', 'login', 'wallet', 'history', 'admin', 'admin-login',
   'crash', 'dice', 'mines', 'limbo',
   'colortrading', 'plinko', 'tower', 'hilo', 'keno', 'wheel',
   'roulette', 'slots', 'blackjack', 'baccarat', 'videopoker'
@@ -93,6 +94,7 @@ function App() {
       case 'home': return <GameGrid onSelectGame={setActiveView} />;
       
       // Core Infrastructure
+      case 'account': return <AccountPage onNavigate={setActiveView} />;
       case 'login': return <LoginPage onNavigate={setActiveView} />;
       case 'wallet': return <WalletPage onNavigate={setActiveView} />;
       case 'history': return <HistoryPage onNavigate={setActiveView} />;
@@ -126,31 +128,20 @@ function App() {
     }
   };
 
-  // If login page, don't render sidebar and navbar
-  if (activeView === 'login') {
-     return (
-       <AuthProvider>
-         <WalletProvider>
-           <div className="flex h-screen bg-[#0F212E] text-white overflow-hidden font-sans">
-             {renderContent()}
-           </div>
-         </WalletProvider>
-       </AuthProvider>
-     );
-  }
+  const isAuthView = activeView === 'login';
 
   return (
     <AuthProvider>
       <WalletProvider>
         <div className="flex h-screen bg-[#0F212E] text-white overflow-hidden font-sans">
-          <Sidebar activeView={activeView} setActiveView={setActiveView} />
+          {!isAuthView && <Sidebar activeView={activeView} setActiveView={setActiveView} />}
           <div className="flex-1 flex flex-col min-w-0">
-            <Navbar />
+            {!isAuthView && <Navbar onNavigate={setActiveView} />}
             <main className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar relative">
               {renderContent()}
             </main>
           </div>
-          <AIChatWidget />
+          {!isAuthView && <AIChatWidget />}
         </div>
       </WalletProvider>
     </AuthProvider>

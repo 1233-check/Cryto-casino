@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Gamepad2, TrendingUp, CircleDot, Bomb, Dice5, Dices, ArrowUpToLine, History, LayoutGrid, Target, Activity, LogOut, FileText } from 'lucide-react';
+import { Home, User, Gamepad2, TrendingUp, CircleDot, Bomb, Dice5, Dices, ArrowUpToLine, History, LayoutGrid, Target, Activity, LogOut, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar({ activeView, setActiveView }) {
@@ -7,6 +7,7 @@ export default function Sidebar({ activeView, setActiveView }) {
 
   const navItems = [
     { id: 'home', label: 'Casino Home', icon: Home, category: 'Main' },
+    { id: 'account', label: 'My Account', icon: User, category: 'Main' },
     { id: 'history', label: 'Game History', icon: FileText, category: 'Main' },
     // Category A - Originals
     { id: 'crash', label: 'Crash', icon: TrendingUp, category: 'Originals' },
@@ -73,13 +74,17 @@ export default function Sidebar({ activeView, setActiveView }) {
       <div className="p-4 mt-auto border-t border-white/[0.04]">
         {user ? (
           <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3 px-3 py-2">
-               <img src={user.avatar} alt="Avatar" className="w-8 h-8 rounded-full bg-[#2F4553]" />
-               <div className="flex flex-col overflow-hidden">
-                 <span className="text-sm font-bold text-white truncate">{user.name}</span>
-                 <span className="text-xs text-[#00E701] font-bold">Online</span>
+            <button 
+              onClick={() => setActiveView('account')}
+              className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] transition-colors text-left group"
+              title="View Account Details"
+            >
+               <img src={user.avatar} alt="Avatar" className="w-8 h-8 rounded-full bg-[#2F4553] border border-[#00E701]/40" />
+               <div className="flex flex-col overflow-hidden flex-1 min-w-0">
+                 <span className="text-sm font-bold text-white truncate group-hover:text-[#00E701] transition-colors">{user.name}</span>
+                 <span className="text-xs text-[#00E701] font-bold">Online • View Profile</span>
                </div>
-            </div>
+            </button>
             <button 
               onClick={logout}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-semibold text-[#B1BAD3] hover:bg-[#ED4163]/10 hover:text-[#ED4163]"

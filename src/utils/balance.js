@@ -13,9 +13,12 @@ auth.onAuthStateChanged((user) => {
     const userRef = doc(db, 'users', user.uid);
     onSnapshot(userRef, (docSnap) => {
       if (docSnap.exists()) {
-        currentBalance = docSnap.data().balance || 0;
+        const val = docSnap.data().balance;
+        currentBalance = typeof val === 'number' ? val : (parseFloat(val) || 0);
         dispatchBalanceUpdate(currentBalance);
       }
+    }, (error) => {
+      console.warn('Firestore balance subscription notice:', error?.message || error);
     });
   } else {
     currentBalance = DEFAULT_BALANCE;

@@ -1,18 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Search, Bell, Settings, LogIn } from 'lucide-react';
+import { Wallet, Search, Bell, Settings, LogIn, User } from 'lucide-react';
 import { getBalance } from '../utils/balance';
 import { useAuth } from '../context/AuthContext';
 
-export default function Navbar() {
+export default function Navbar({ onNavigate }) {
   const [balance, setBalance] = useState(getBalance());
   const { user } = useAuth();
 
+  const navigateTo = (view) => {
+    if (onNavigate) {
+      onNavigate(view);
+    } else if (typeof window !== 'undefined') {
+      window.location.hash = `#${view}`;
+    }
+  };
+
   // Listen for balance updates from anywhere in the app
   useEffect(() => {
+    const handleBalanceUpdate = () => setBalance(getBalance());
+    window.addEventListener('balance-update', handleBalanceUpdate);
     const interval = setInterval(() => {
       setBalance(getBalance());
-    }, 500);
-    return () => clearInterval(interval);
+    }, 1000);
+    return () => {
+      window.removeEventListener('balance-update', handleBalanceUpdate);
+      clearInterval(interval);
+    };
   }, []);
 
   return (
@@ -34,37 +47,56 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Right - Balance & Profile */}
+      {/* Right - Balance, Profile & Wallet */}
       <div className="flex items-center gap-3">
         {user ? (
           <>
+            {/* Vault Balance */}
             <div className="bg-[#0F212E] px-4 py-2 rounded-lg flex items-center gap-3 border border-white/[0.04]">
               <span className="font-bold font-display tracking-wider text-sm tabular-nums">
-                {balance.toFixed(8)}
+                {typeof balance === 'number' ? balance.toFixed(8) : parseFloat(balance || 0).toFixed(8)}
               </span>
               <span className="text-[#00E701] font-bold text-xs">BTC</span>
             </div>
             
+            {/* Wallet Button */}
             <button 
-              onClick={() => window.location.hash = '#wallet'}
+              onClick={() => navigateTo('wallet')}
               className="bg-[#1475E1] hover:bg-[#1475E1]/80 transition-colors text-white px-4 py-2 rounded-lg font-bold text-sm hidden sm:flex items-center gap-2 shadow-[0_0_15px_rgba(20,117,225,0.4)]"
             >
               <Wallet className="w-4 h-4" />
               Wallet
             </button>
 
+            {/* User Profile Pill */}
+            <button
+              onClick={() => navigateTo('account')}
+              className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 bg-[#0F212E] hover:bg-[#213743] rounded-lg border border-white/5 transition-all text-left"
+              title="View Account Profile"
+            >
+              <img 
+                src={user.avatar} 
+                alt={user.name} 
+                className="w-7 h-7 rounded-full bg-[#2F4553] object-cover border border-[#00E701]/50" 
+              />
+              <span className="text-xs font-bold text-white hidden md:inline max-w-[100px] truncate">
+                {user.name}
+              </span>
+            </button>
+
             <div className="flex items-center gap-1 border-l border-white/[0.04] pl-2 ml-1">
-              <button className="p-2 text-[#B1BAD3] hover:text-white transition-colors">
-                <Bell className="w-5 h-5" />
-              </button>
-              <button className="p-2 text-[#B1BAD3] hover:text-white transition-colors">
+              <button 
+                onClick={() => navigateTo('account')}
+                className="p-2 text-[#B1BAD3] hover:text-white transition-colors"
+                title="Account Settings"
+              >
                 <Settings className="w-5 h-5" />
               </button>
             </div>
           </>
         ) : (
           <button 
-            onClick={() => window.location.hash = '#login'}
+            onClick={() => navigateTo('login')}
             className="bg-[#00E701] hover:bg-[#00E701]/90 transition-colors text-black px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-[0_0_15px_rgba(0,231,1,0.4)]"
           >
             <LogIn className="w-4 h-4" />
