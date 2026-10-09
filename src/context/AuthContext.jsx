@@ -14,24 +14,25 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Ensure user document exists in Firestore
-        const userRef = doc(db, 'users', firebaseUser.uid);
-        const userSnap = await getDoc(userRef);
-        
         let userData = {
           id: firebaseUser.uid,
           name: firebaseUser.displayName || 'Player',
           email: firebaseUser.email,
           avatar: firebaseUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${firebaseUser.uid}`,
         };
-
-        if (!userSnap.exists()) {
-          // Initialize new user with default balance
-          await setDoc(userRef, {
-            ...userData,
-            balance: 1.00000000,
-            createdAt: new Date().toISOString()
-          });
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        try {
+          const userSnap = await getDoc(userRef);
+          if (!userSnap.exists()) {
+            // Initialize new user with default balance
+            await setDoc(userRef, {
+              ...userData,
+              balance: 1.00000000,
+              createdAt: new Date().toISOString()
+            });
+          }
+        } catch (dbError) {
+          console.error("Firestore Error (Is your Firestore Database enabled?):", dbError);
         }
         setUser(userData);
       } else {
