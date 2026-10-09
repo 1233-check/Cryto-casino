@@ -4,10 +4,16 @@ import { useWallet } from '../context/WalletContext';
 import { motion } from 'framer-motion';
 
 export default function LoginPage({ onNavigate }) {
-  const { loginWithGoogle } = useAuth();
+  const { loginWithGoogle, user } = useAuth();
   const { connectMetaMask, connectPhantom, connectTrustWallet, isConnecting } = useWallet();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [activeMethod, setActiveMethod] = useState(null); // 'google' | 'metamask' | 'phantom' | 'trust'
+
+  React.useEffect(() => {
+    if (user) {
+      onNavigate('home');
+    }
+  }, [user, onNavigate]);
 
   const handleGoogleLogin = async () => {
     setIsLoggingIn(true);
