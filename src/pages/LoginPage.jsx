@@ -18,16 +18,10 @@ export default function LoginPage({ onNavigate }) {
   const handleGoogleLogin = async () => {
     setIsLoggingIn(true);
     setActiveMethod('google');
-    try {
-      await loginWithGoogle();
-      onNavigate('home');
-    } catch (err) {
-      console.error('Google login failed:', err);
-      alert('Google Login Failed: ' + err.message);
-    } finally {
-      setIsLoggingIn(false);
-      setActiveMethod(null);
-    }
+    // This will redirect the browser to Google's sign-in page.
+    // When the user comes back, onAuthStateChanged fires,
+    // user gets set, and the useEffect above navigates to 'home'.
+    await loginWithGoogle();
   };
 
   const handleWalletLogin = async (type) => {

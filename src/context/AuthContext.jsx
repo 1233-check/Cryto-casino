@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '../firebase';
-import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
+import { signInWithRedirect, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
@@ -47,13 +47,10 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    try {
-      const result = await signInWithPopup(auth, provider);
-      return result.user;
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
-    }
+    // Use redirect (not popup) to completely avoid COOP browser restrictions
+    await signInWithRedirect(auth, provider);
+    // Page will navigate away to Google. When it comes back,
+    // onAuthStateChanged fires automatically and sets the user.
   };
 
   const logout = async () => {
