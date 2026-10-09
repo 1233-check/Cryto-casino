@@ -24,15 +24,16 @@ export const AuthProvider = ({ children }) => {
         try {
           const userSnap = await getDoc(userRef);
           if (!userSnap.exists()) {
-            // Initialize new user with default balance
-            await setDoc(userRef, {
-              ...userData,
-              balance: 1.00000000,
-              createdAt: new Date().toISOString()
-            });
+            userData.balance = 1.00000000;
+            userData.createdAt = new Date().toISOString();
+            await setDoc(userRef, userData);
+          } else {
+            userData = { ...userData, ...userSnap.data() };
           }
         } catch (dbError) {
           console.error("Firestore Error (Is your Firestore Database enabled?):", dbError);
+          // Provide fallback balance so the app doesn't crash on .toFixed()
+          userData.balance = userData.balance || 0.00000000;
         }
         setUser(userData);
       } else {
