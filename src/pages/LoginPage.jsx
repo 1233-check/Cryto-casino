@@ -17,6 +17,7 @@ export default function LoginPage({ onNavigate }) {
       onNavigate('home');
     } catch (err) {
       console.error('Google login failed:', err);
+      alert('Google Login Failed: ' + err.message);
     } finally {
       setIsLoggingIn(false);
       setActiveMethod(null);
@@ -27,12 +28,11 @@ export default function LoginPage({ onNavigate }) {
     setIsLoggingIn(true);
     setActiveMethod(type);
     try {
-      if (type === 'metamask') await connectMetaMask();
-      else if (type === 'phantom') await connectPhantom();
-      else if (type === 'trust') await connectTrustWallet();
+      if (type === 'trust') await connectTrustWallet();
       onNavigate('home');
     } catch (err) {
       console.error(`${type} login failed:`, err);
+      alert(`Wallet Login Failed: ` + err.message);
     } finally {
       setIsLoggingIn(false);
       setActiveMethod(null);
