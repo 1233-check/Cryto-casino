@@ -113,7 +113,10 @@ export default function AdminPage({ onNavigate }) {
         <div className="bg-[#ED4163]/10 border border-[#ED4163]/20 rounded-2xl p-6 text-center">
           <ShieldAlert className="w-12 h-12 text-[#ED4163] mx-auto mb-4" />
           <h2 className="text-xl font-bold text-white mb-2">Access Restricted</h2>
-          <p className="text-[#B1BAD3] mb-4">You do not have administrative privileges to view this page.</p>
+          <p className="text-[#B1BAD3] mb-4">
+            You are currently logged in as: <strong className="text-white bg-black/20 px-2 py-1 rounded">{user?.email || 'Unknown User'}</strong>
+          </p>
+          <p className="text-[#B1BAD3] mb-6">You do not have administrative privileges to view this page.</p>
           <p className="text-xs text-[#557086]">In a production environment, Firebase Security Rules would block this request.</p>
         </div>
       )}
