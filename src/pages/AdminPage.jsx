@@ -423,7 +423,6 @@ export default function AdminPage({ onNavigate }) {
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    );
 }

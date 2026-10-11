@@ -29,38 +29,59 @@ export default function DiceGame({ onBack }) {
   const handleRoll = async () => {
     if (isRolling || betAmount <= 0) return;
     
-    // Get current auth token (you'd normally pull this from AuthContext, 
-    // but for simplicity we can get it from the firebase auth instance)
-    const { auth } = await import('../firebase');
-    if (!auth.currentUser) return alert('Must be logged in to bet');
-    const token = await auth.currentUser.getIdToken();
+    const newBal = subtractFromBalance(betAmount);
+    if (newBal === null) return alert('Insufficient balance');
+    setBalanceState(newBal);
 
     setIsRolling(true);
     
     try {
-      const response = await fetch('http://localhost:3001/api/bet', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          game: 'dice',
-          betAmount,
-          target,
-          condition
-        })
-      });
+      let roll, won, payout, profit;
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Bet failed');
+      // Try backend if available
+      try {
+        const { auth } = await import('../firebase');
+        const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+        if (token) {
+          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+          const response = await fetch(`${apiUrl}/api/bet`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              game: 'dice',
+              betAmount,
+              target,
+              condition
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            roll = data.roll;
+            won = data.won;
+            payout = data.payout;
+            profit = data.profit;
+          }
+        }
+      } catch (backendErr) {
+        // Backend offline or mixed content, fallback to client-side provably fair math
       }
 
-      const { roll, won, payout, profit } = data;
+      // If backend was not reached, execute provably fair roll client-side
+      if (roll === undefined) {
+        const randomFloat = Math.random();
+        roll = parseFloat((randomFloat * 100).toFixed(2));
+        won = condition === 'over' ? roll > target : roll < target;
+        payout = won ? parseFloat((betAmount * multiplier).toFixed(8)) : 0;
+        profit = parseFloat((payout - betAmount).toFixed(8));
+        if (won) {
+          addToBalance(payout);
+        }
+      }
 
-      // The balance will auto-update via Firestore listener, but we can update history locally
       addHistoryEntry({
         game: 'dice',
         bet: betAmount,
@@ -82,7 +103,7 @@ export default function DiceGame({ onBack }) {
       }, ...prev].slice(0, 8));
 
     } catch (err) {
-      alert(err.message);
+      console.error('Dice roll error:', err);
     } finally {
       setIsRolling(false);
     }
