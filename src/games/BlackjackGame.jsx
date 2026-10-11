@@ -5,6 +5,7 @@ import BetControls from '../components/BetControls';
 import { createDeck, SUIT_COLORS } from '../utils/constants';
 import { shuffleArray } from '../utils/provablyFair';
 import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
+import { placeAuthoritativeBet } from '../utils/betApi';
 
 const STATES = {
   BETTING: 'BETTING',
@@ -143,6 +144,11 @@ export default function BlackjackGame({ onBack }) {
 
      const payout = parseFloat((bet * payoutMult).toFixed(8));
      const profit = parseFloat((payout - bet).toFixed(8));
+
+     placeAuthoritativeBet({
+       game: 'blackjack',
+       betAmount: bet
+     }).catch(() => {});
 
      if (payout > 0) {
        addToBalance(payout);

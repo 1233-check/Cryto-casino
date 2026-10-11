@@ -5,6 +5,7 @@ import BetControls from '../components/BetControls';
 import { SLOT_SYMBOLS, SLOT_PAYOUTS } from '../utils/constants';
 import { playSound } from '../utils/audio';
 import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
+import { placeAuthoritativeBet } from '../utils/betApi';
 
 const PAYLINES = [
   [1, 1, 1, 1, 1], // 1: Middle
@@ -273,7 +274,7 @@ export default function SlotsGame({ onBack }) {
     };
   }, []); // Run once
 
-  const spin = () => {
+  const spin = async () => {
     if (isPlaying || betAmount <= 0) return;
     const newBal = subtractFromBalance(betAmount);
     if (newBal === null) return alert('Insufficient balance');
@@ -292,12 +293,24 @@ export default function SlotsGame({ onBack }) {
     }
 
     const reels = reelsRef.current;
-    const finalResult = [];
+    let finalResult = [];
+
+    try {
+      const backendResult = await placeAuthoritativeBet({
+        game: 'slots',
+        betAmount
+      });
+      if (backendResult && Array.isArray(backendResult.reels)) {
+        finalResult = backendResult.reels;
+      }
+    } catch (e) {
+      // Fallback
+    }
     
     const now = Date.now();
     for (let i = 0; i < REELS_COUNT; i++) {
-        const col = [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()];
-        finalResult.push(col);
+        const col = finalResult[i] || [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()];
+        if (!finalResult[i]) finalResult.push(col);
         
         reels[i].phase = 'spinning';
         reels[i].speed = 0;

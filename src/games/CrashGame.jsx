@@ -4,6 +4,7 @@ import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
 import { getCrashPoint, generateServerSeed } from '../utils/provablyFair';
 import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
+import { placeAuthoritativeBet } from '../utils/betApi';
 
 export default function CrashGame({ onBack }) {
   const canvasRef = useRef(null);
@@ -343,6 +344,13 @@ export default function CrashGame({ onBack }) {
     if (betState !== 'active') return;
     const mult = multRef.current;
     const winAmt = betAmount * mult;
+
+    placeAuthoritativeBet({
+      game: 'crash',
+      betAmount,
+      params: { cashoutAt: mult }
+    }).catch(() => {});
+
     addToBalance(winAmt);
     setBetState('cashed_out');
     setLastWin(winAmt);

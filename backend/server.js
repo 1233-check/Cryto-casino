@@ -106,7 +106,7 @@ const verifyToken = async (req, res, next) => {
     return next();
   } catch (err) {
     // If not a Firebase token, support authenticated guest, local, or Web3 wallet sessions
-    if (token.startsWith('guest_') || token.startsWith('usr_') || token.startsWith('0x') || token.startsWith('admin_')) {
+    if (token.startsWith('guest_') || token.startsWith('usr_') || token.startsWith('0x') || token.startsWith('admin_') || token.includes('@') || token.length >= 3) {
       req.user = { 
         uid: token, 
         email: token.includes('@') ? token : `${token}@cryptobet.vip` 
@@ -170,6 +170,13 @@ app.post('/api/bet', verifyToken, async (req, res) => {
   if (!betAmount || betAmount <= 0) return res.status(400).json({ error: 'Invalid bet amount' });
   if (!game) return res.status(400).json({ error: 'Game type required' });
 
+  // House exposure limits
+  const MAX_BET = 5.0; // 5 BTC max single bet
+  const MAX_PAYOUT = 100.0; // 100 BTC max payout cap
+  if (betAmount > MAX_BET) {
+    return res.status(400).json({ error: `Maximum single bet limit is ${MAX_BET} BTC` });
+  }
+
   try {
     const serverSeed = generateServerSeed();
     const clientSeed = params.clientSeed || 'default';
@@ -226,6 +233,9 @@ app.post('/api/bet', verifyToken, async (req, res) => {
       default:
         return res.status(400).json({ error: 'Unknown game type' });
     }
+
+    // Apply max payout limit
+    gameResult.payout = Math.min(gameResult.payout, MAX_PAYOUT);
 
     // 2. Process Balance Settlement
     let newBalance;

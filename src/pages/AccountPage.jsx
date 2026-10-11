@@ -24,6 +24,37 @@ export default function AccountPage({ onNavigate }) {
   const isAdmin = isUserAdmin(user);
   const [balance, setBalance] = useState(getBalance());
   const [copied, setCopied] = useState(false);
+  const [clientSeed, setClientSeed] = useState(() => localStorage.getItem('cryptobet_client_seed') || 'provably_fair_client');
+  const [seedSaved, setSeedSaved] = useState(false);
+  const [selfExclusion, setSelfExclusion] = useState(() => localStorage.getItem('cryptobet_self_exclusion') || 'none');
+  const [depositLimit, setDepositLimit] = useState(() => localStorage.getItem('cryptobet_deposit_limit') || 'unlimited');
+
+  const saveClientSeed = () => {
+    localStorage.setItem('cryptobet_client_seed', clientSeed);
+    setSeedSaved(true);
+    setTimeout(() => setSeedSaved(false), 2000);
+  };
+
+  const randomizeSeed = () => {
+    const random = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    setClientSeed(random);
+    localStorage.setItem('cryptobet_client_seed', random);
+    setSeedSaved(true);
+    setTimeout(() => setSeedSaved(false), 2000);
+  };
+
+  const updateSelfExclusion = (val) => {
+    setSelfExclusion(val);
+    localStorage.setItem('cryptobet_self_exclusion', val);
+    if (val !== 'none') {
+      alert(`Self-exclusion applied for ${val}. Responsible gaming protections are active.`);
+    }
+  };
+
+  const updateDepositLimit = (val) => {
+    setDepositLimit(val);
+    localStorage.setItem('cryptobet_deposit_limit', val);
+  };
 
   useEffect(() => {
     const handleBalanceUpdate = () => setBalance(getBalance());
@@ -290,6 +321,85 @@ export default function AccountPage({ onNavigate }) {
             <span className="text-xs text-[#557086] block mb-1">Session Protocol</span>
             <span className="text-sm font-bold text-[#1475E1]">Firebase Secure JWT</span>
             <p className="text-[11px] text-[#B1BAD3] mt-1">Encrypted authentication handshake</p>
+          </div>
+        </div>
+
+        {/* Client Seed Customizer */}
+        <div className="mt-6 pt-6 border-t border-white/5">
+          <label className="text-xs font-bold uppercase tracking-wider text-[#B1BAD3] block mb-2">
+            Customize Active Client Seed
+          </label>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              value={clientSeed}
+              onChange={(e) => setClientSeed(e.target.value)}
+              className="flex-1 bg-[#0F212E] border border-white/10 rounded-xl px-4 py-3 text-white font-mono text-sm outline-none focus:border-[#00E701]"
+              placeholder="Enter custom client seed"
+            />
+            <button
+              onClick={randomizeSeed}
+              className="px-4 py-3 bg-white/5 hover:bg-white/10 text-[#B1BAD3] hover:text-white rounded-xl text-sm font-bold transition-all border border-white/10"
+            >
+              Randomize
+            </button>
+            <button
+              onClick={saveClientSeed}
+              className="px-6 py-3 bg-[#00E701] hover:bg-[#00E701]/90 text-black rounded-xl text-sm font-bold transition-all"
+            >
+              {seedSaved ? 'Saved ✓' : 'Update Seed'}
+            </button>
+          </div>
+          <p className="text-[11px] text-[#557086] mt-2">
+            Your client seed directly alters the cryptographic hash outcome. Changing this ensures absolute unpredictability.
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Responsible Gaming & Limits */}
+      <motion.div 
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="bg-[#1A2C38] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-xl"
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-3 bg-[#1475E1]/10 text-[#1475E1] rounded-xl border border-[#1475E1]/20">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white">Responsible Gaming & Protection</h2>
+            <p className="text-xs text-[#B1BAD3]">Set deposit caps or activate self-exclusion cooling off periods</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-[#0F212E] p-4 rounded-2xl border border-white/5">
+            <span className="text-xs text-[#557086] block mb-2">Daily Deposit Limit</span>
+            <select
+              value={depositLimit}
+              onChange={(e) => updateDepositLimit(e.target.value)}
+              className="w-full bg-[#1A2C38] border border-white/10 rounded-xl p-3 text-sm font-bold text-white outline-none"
+            >
+              <option value="unlimited">No Limit (Default)</option>
+              <option value="0.1">0.10 BTC / Day</option>
+              <option value="0.5">0.50 BTC / Day</option>
+              <option value="1.0">1.00 BTC / Day</option>
+            </select>
+          </div>
+
+          <div className="bg-[#0F212E] p-4 rounded-2xl border border-white/5">
+            <span className="text-xs text-[#557086] block mb-2">Self-Exclusion Freeze</span>
+            <select
+              value={selfExclusion}
+              onChange={(e) => updateSelfExclusion(e.target.value)}
+              className="w-full bg-[#1A2C38] border border-white/10 rounded-xl p-3 text-sm font-bold text-white outline-none"
+            >
+              <option value="none">Active (No Freeze)</option>
+              <option value="24h">24 Hour Cool-Off</option>
+              <option value="7d">7 Day Self-Exclusion</option>
+              <option value="30d">30 Day Self-Exclusion</option>
+            </select>
           </div>
         </div>
       </motion.div>

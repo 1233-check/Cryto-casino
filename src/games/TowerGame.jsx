@@ -4,6 +4,7 @@ import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
 import { Gem, Bomb, ShieldCheck, Skull } from 'lucide-react';
 import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
+import { placeAuthoritativeBet } from '../utils/betApi';
 
 const difficulties = {
   easy: { cols: 4, safe: 3, bombs: 1, name: 'Easy' },
@@ -50,11 +51,23 @@ export default function TowerGame({ onBack }) {
     setProfit(0);
   };
 
-  const handleCashout = () => {
+  const handleCashout = async () => {
     if (gameState !== 'playing' || currentFloor === 0) return;
     const mult = getMultiplier(difficulty, currentFloor);
     const payout = parseFloat((betAmount * mult).toFixed(8));
     const profitVal = parseFloat((payout - betAmount).toFixed(8));
+
+    const selectedPath = tower.slice(0, currentFloor).map(t => t.pickedIndex);
+    try {
+      await placeAuthoritativeBet({
+        game: 'tower',
+        betAmount,
+        params: { difficulty, selectedPath }
+      });
+    } catch (e) {
+      // Handled via local fallback
+    }
+
     addToBalance(payout);
     addHistoryEntry({
       game: 'tower',

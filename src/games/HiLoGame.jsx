@@ -37,6 +37,7 @@ const Card = ({ card, size = 'large', className = "" }) => {
 };
 
 import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
+import { placeAuthoritativeBet } from '../utils/betApi';
 
 export default function HiLoGame({ onBack }) {
   const [balance, setBalanceState] = useState(getBalance());

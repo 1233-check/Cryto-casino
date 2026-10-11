@@ -5,6 +5,7 @@ import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
 import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
 import { getGameResult } from '../utils/provablyFair';
+import { placeAuthoritativeBet } from '../utils/betApi';
 import { ROULETTE_SEQUENCE, RED_NUMBERS, BLACK_NUMBERS } from '../utils/constants';
 
 const arc = (Math.PI * 2) / 37;
@@ -246,7 +247,7 @@ export default function RouletteGame({ onBack }) {
     return payout;
   };
 
-  const spin = () => {
+  const spin = async () => {
     const currentBets = betsRef.current;
     const totalBet = Object.values(currentBets).reduce((a, b) => a + b, 0);
     
@@ -254,6 +255,7 @@ export default function RouletteGame({ onBack }) {
       const newBal = subtractFromBalance(totalBet);
       if (newBal === null) {
         setBets({}); 
+        return;
       } else {
         setLocalBalance(newBal);
       }
@@ -262,7 +264,26 @@ export default function RouletteGame({ onBack }) {
     setGameState('SPINNING');
     setResult(null);
 
-    const winNum = Math.floor(getGameResult(0, 37));
+    let winNum;
+    if (totalBet > 0) {
+      try {
+        const backendResult = await placeAuthoritativeBet({
+          game: 'roulette',
+          betAmount: totalBet,
+          params: { betType: 'straight', betValue: 0 }
+        });
+        if (backendResult && typeof backendResult.number === 'number') {
+          winNum = backendResult.number;
+        }
+      } catch (e) {
+        // Fallback
+      }
+    }
+
+    if (winNum === undefined) {
+      winNum = Math.floor(getGameResult(0, 37));
+    }
+
     const winIdx = ROULETTE_SEQUENCE.indexOf(winNum);
     const pocketAngle = winIdx * arc + arc / 2;
 

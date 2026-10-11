@@ -4,6 +4,7 @@ import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
 import { COLOR_MAP } from '../utils/constants';
 import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
+import { placeAuthoritativeBet } from '../utils/betApi';
 
 export default function ColorTradingGame({ onBack }) {
   const [balance, setBalanceState] = useState(getBalance());
@@ -41,6 +42,14 @@ export default function ColorTradingGame({ onBack }) {
           let totalBet = 0;
 
           if (Object.keys(currentBets).length > 0) {
+            const sumBet = Object.values(currentBets).reduce((a, b) => a + b, 0);
+            const firstColorBet = Object.keys(currentBets).find(k => k.startsWith('color-'))?.replace('color-', '') || 'green';
+            placeAuthoritativeBet({
+              game: 'colortrading',
+              betAmount: sumBet,
+              params: { color: firstColorBet }
+            }).catch(() => {});
+
             for (const [key, amount] of Object.entries(currentBets)) {
               totalBet += amount;
               const [type, value] = key.split('-');

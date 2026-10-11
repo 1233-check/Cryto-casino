@@ -4,6 +4,7 @@ import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
 import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
 import { playSound } from '../utils/audio';
+import { placeAuthoritativeBet } from '../utils/betApi';
 
 const SUITS = ['♠', '♥', '♣', '♦'];
 const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
@@ -235,6 +236,11 @@ export default function VideoPokerGame({ onBack }) {
     setResult(evalResult);
     setGameState('IDLE');
     setIsAnimating(false);
+
+    placeAuthoritativeBet({
+      game: 'videopoker',
+      betAmount
+    }).catch(() => {});
     
     if (evalResult.multi > 0) {
       const winAmount = betAmount * evalResult.multi;

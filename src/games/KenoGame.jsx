@@ -7,6 +7,7 @@ import { KENO_PAYOUTS } from '../utils/constants';
 import { shuffleArray } from '../utils/provablyFair';
 import { playSound } from '../utils/audio';
 import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
+import { placeAuthoritativeBet } from '../utils/betApi';
 
 const TOTAL_NUMBERS = 40;
 const DRAW_COUNT = 10;
@@ -65,7 +66,7 @@ export default function KenoGame({ onBack }) {
     setStatus('idle');
   };
 
-  const handlePlay = () => {
+  const handlePlay = async () => {
     if (isPlaying || selectedNumbers.length === 0 || betAmount <= 0) return;
     const newBal = subtractFromBalance(betAmount);
     if (newBal === null) return alert('Insufficient balance');
@@ -78,9 +79,26 @@ export default function KenoGame({ onBack }) {
     setLastWin(0);
     setLastMultiplier(0);
 
-    const pool = Array.from({ length: TOTAL_NUMBERS }, (_, i) => i + 1);
-    const shuffled = shuffleArray(pool);
-    const finalDrawn = shuffled.slice(0, DRAW_COUNT);
+    let finalDrawn;
+
+    try {
+      const backendResult = await placeAuthoritativeBet({
+        game: 'keno',
+        betAmount,
+        params: { selectedNumbers }
+      });
+      if (backendResult && Array.isArray(backendResult.drawnNumbers)) {
+        finalDrawn = backendResult.drawnNumbers;
+      }
+    } catch (e) {
+      // Fallback
+    }
+
+    if (!finalDrawn) {
+      const pool = Array.from({ length: TOTAL_NUMBERS }, (_, i) => i + 1);
+      const shuffled = shuffleArray(pool);
+      finalDrawn = shuffled.slice(0, DRAW_COUNT);
+    }
 
     let step = 0;
     const currentDrawn = [];

@@ -5,6 +5,7 @@ import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
 import { shuffleArray } from '../utils/provablyFair';
 import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
+import { placeAuthoritativeBet } from '../utils/betApi';
 
 function comb(n, k) {
   if (k < 0 || k > n) return 0;
@@ -103,13 +104,28 @@ export default function MinesGame({ onBack }) {
     }
   };
 
-  const handleCashout = (overrideCount) => {
+  const handleCashout = async (overrideCount) => {
     const count = typeof overrideCount === 'number' ? overrideCount : revealedCount;
     if (count === 0) return;
     
     const mult = getMultiplier(minesCount, count);
     const winAmt = parseFloat((betAmount * mult).toFixed(8));
     const profit = parseFloat((winAmt - betAmount).toFixed(8));
+
+    const selectedTiles = [];
+    clickedTiles.forEach((status, idx) => {
+      if (status === 'safe') selectedTiles.push(idx);
+    });
+
+    try {
+      await placeAuthoritativeBet({
+        game: 'mines',
+        betAmount,
+        params: { minesCount, selectedTiles }
+      });
+    } catch (e) {
+      // Local fallback
+    }
     
     addToBalance(winAmt);
     addHistoryEntry({

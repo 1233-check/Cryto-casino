@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
 import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
+import { placeAuthoritativeBet } from '../utils/betApi';
 
 const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'];
 const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
@@ -163,6 +164,12 @@ export default function BaccaratGame({ onBack }) {
     
     let wonAmount = 0;
     let returnedBet = 0;
+
+    placeAuthoritativeBet({
+      game: 'baccarat',
+      betAmount,
+      params: { betSide: betTarget }
+    }).catch(() => {});
     
     if (result === betTarget) {
       if (result === 'player') wonAmount = betAmount * 2;

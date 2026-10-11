@@ -381,6 +381,27 @@ export default function GameGrid({ onSelectGame }) {
           </div>
         </div>
       </div>
+
+      {/* 18+ Responsible Gaming & Compliance Footer */}
+      <div className="mt-8 pt-6 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#557086]">
+        <div className="flex items-center gap-3">
+          <span className="w-7 h-7 rounded-full border border-[#ED4163]/50 text-[#ED4163] font-bold text-xs flex items-center justify-center">
+            18+
+          </span>
+          <span>
+            Play Responsibly. Crypto gambling involves risk. Only wager funds you can afford to lose.
+          </span>
+        </div>
+        <div className="flex items-center gap-6 text-[#B1BAD3]">
+          <span className="hover:text-white cursor-pointer transition-colors" onClick={() => onSelectGame('account')}>
+            Provably Fair Verifier
+          </span>
+          <span className="hover:text-white cursor-pointer transition-colors" onClick={() => onSelectGame('account')}>
+            Responsible Gaming
+          </span>
+          <span className="text-[#557086]">© 2026 CryptoBet. Non-Custodial Entertainment.</span>
+        </div>
+      </div>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import BetControls from '../components/BetControls';
 import { PLINKO_MULTIPLIERS } from '../utils/constants';
 import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
 import { getProvablyFairFloats, generateServerSeed } from '../utils/provablyFair';
+import { placeAuthoritativeBet } from '../utils/betApi';
 
 export default function PlinkoGame({ onBack }) {
   const [betAmount, setBetAmount] = useState(1);
@@ -23,20 +24,40 @@ export default function PlinkoGame({ onBack }) {
     setBalanceState(newBal);
   };
   
-  const handleBet = () => {
+  const handleBet = async () => {
     const currentBal = getBalance();
-    if (currentBal < betAmount) return;
+    if (currentBal < betAmount) return alert('Insufficient balance');
     
     subtractFromBalance(betAmount);
     updateBalance(getBalance());
     
-    dropNonceRef.current += 1;
-    const floats = getProvablyFairFloats(generateServerSeed(), 'plinko', dropNonceRef.current, rows);
-    const path = floats.map(f => f > 0.5 ? 1 : 0);
-    
-    const j = path.reduce((a, b) => a + b, 0);
-    const payoutMultiplier = PLINKO_MULTIPLIERS[rows][risk][j];
-    const payout = betAmount * payoutMultiplier;
+    let path, j, payout, payoutMultiplier;
+
+    try {
+      const backendResult = await placeAuthoritativeBet({
+        game: 'plinko',
+        betAmount,
+        params: { rows, risk }
+      });
+
+      if (backendResult && backendResult.path) {
+        path = backendResult.path;
+        j = backendResult.position;
+        payoutMultiplier = backendResult.multiplier;
+        payout = backendResult.payout;
+      }
+    } catch (err) {
+      // Ignore and fallback
+    }
+
+    if (!path) {
+      dropNonceRef.current += 1;
+      const floats = getProvablyFairFloats(generateServerSeed(), 'plinko', dropNonceRef.current, rows);
+      path = floats.map(f => f > 0.5 ? 1 : 0);
+      j = path.reduce((a, b) => a + b, 0);
+      payoutMultiplier = PLINKO_MULTIPLIERS[rows][risk][j];
+      payout = betAmount * payoutMultiplier;
+    }
     
     ballsRef.current.push({
       id: Date.now() + Math.random(),

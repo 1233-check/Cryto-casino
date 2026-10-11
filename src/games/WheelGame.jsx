@@ -3,6 +3,7 @@ import GameLayout from '../components/GameLayout';
 import BetControls from '../components/BetControls';
 import { WHEEL_SEGMENTS, COLORS } from '../utils/constants';
 import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
+import { placeAuthoritativeBet } from '../utils/betApi';
 import { motion, AnimatePresence } from 'framer-motion';
 
 function getSegmentColor(mult, index) {
@@ -38,7 +39,7 @@ export default function WheelGame({ onBack }) {
     return WHEEL_SEGMENTS[segments]?.[risk] || WHEEL_SEGMENTS[10].low;
   }, [segments, risk]);
 
-  const handleSpin = () => {
+  const handleSpin = async () => {
     if (isSpinning || betAmount <= 0) return;
     const newBal = subtractFromBalance(betAmount);
     if (newBal === null) return alert('Insufficient balance');
@@ -47,8 +48,26 @@ export default function WheelGame({ onBack }) {
     isSpinningRef.current = true;
     setWinResult(null);
 
-    const resultIndex = Math.floor(Math.random() * segments);
-    const mult = multipliers[resultIndex];
+    let resultIndex, mult;
+
+    try {
+      const backendResult = await placeAuthoritativeBet({
+        game: 'wheel',
+        betAmount,
+        params: { segments, risk }
+      });
+      if (backendResult && typeof backendResult.index === 'number') {
+        resultIndex = backendResult.index % segments;
+        mult = backendResult.multiplier;
+      }
+    } catch (e) {
+      // Fallback
+    }
+
+    if (resultIndex === undefined) {
+      resultIndex = Math.floor(Math.random() * segments);
+      mult = multipliers[resultIndex];
+    }
 
     const anglePerSegment = (Math.PI * 2) / segments;
     const spins = 5 + Math.random() * 2; 
