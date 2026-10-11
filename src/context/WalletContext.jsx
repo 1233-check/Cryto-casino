@@ -68,24 +68,52 @@ export const DEPOSIT_ADDRESSES = {
   btc: 'bc1qsef0x4s0sm8n8x5vws2nvy4va6u3dmnkcc6ctm',
 };
 
+const WALLET_SESSION_KEY = 'cryptobet_wallet_session';
+
 export const WalletProvider = ({ children }) => {
-  const [connectedWallet, setConnectedWallet] = useState(null); // 'metamask' | 'phantom' | 'trustwallet'
-  const [walletAddress, setWalletAddress] = useState(null);
+  const [connectedWallet, setConnectedWallet] = useState(() => {
+    try {
+      const saved = localStorage.getItem(WALLET_SESSION_KEY);
+      return saved ? JSON.parse(saved).type : null;
+    } catch {
+      return null;
+    }
+  });
+  const [walletAddress, setWalletAddress] = useState(() => {
+    try {
+      const saved = localStorage.getItem(WALLET_SESSION_KEY);
+      return saved ? JSON.parse(saved).address : null;
+    } catch {
+      return null;
+    }
+  });
   const [selectedChain, setSelectedChain] = useState('ethereum');
   const [isConnecting, setIsConnecting] = useState(false);
   const [txHistory, setTxHistory] = useState([]);
 
-  // Detect available wallets
+  const saveWalletSession = (type, address) => {
+    setConnectedWallet(type);
+    setWalletAddress(address);
+    try {
+      localStorage.setItem(WALLET_SESSION_KEY, JSON.stringify({ type, address }));
+    } catch {}
+  };
+
+  // Detect available wallets in the browser
   const getAvailableWallets = useCallback(() => {
     const wallets = [];
     if (typeof window !== 'undefined') {
-      // Trust Wallet injects as window.ethereum with isTrust or window.trustwallet
+      if (window.ethereum?.isMetaMask) {
+        wallets.push({ id: 'metamask', name: 'MetaMask', assets: ['ethereum', 'bnb', 'usdt'] });
+      }
+      if (window.phantom?.solana || window.solana?.isPhantom) {
+        wallets.push({ id: 'phantom', name: 'Phantom', assets: ['solana'] });
+      }
       if (window.trustwallet || window.ethereum?.isTrust) {
         wallets.push({ id: 'trustwallet', name: 'Trust Wallet', assets: ['ethereum', 'bnb', 'solana', 'usdt', 'btc'] });
       }
-      // Generic ethereum provider fallback (e.g., Coinbase Wallet, Brave Wallet)
-      if (window.ethereum && !window.ethereum.isMetaMask && !window.ethereum.isTrust && wallets.length === 0) {
-        wallets.push({ id: 'ethereum', name: 'Browser Wallet', assets: ['ethereum', 'usdt', 'usdc', 'btc'] });
+      if (window.ethereum && wallets.length === 0) {
+        wallets.push({ id: 'browser', name: 'Browser Wallet', assets: ['ethereum', 'bnb', 'usdt'] });
       }
     }
     return wallets;
@@ -93,16 +121,16 @@ export const WalletProvider = ({ children }) => {
 
   // Connect MetaMask / EVM wallet
   const connectMetaMask = useCallback(async () => {
-    if (!window.ethereum) {
+    const provider = window.ethereum;
+    if (!provider) {
       window.open('https://metamask.io/download/', '_blank');
-      throw new Error('MetaMask not installed');
+      throw new Error('MetaMask extension is not installed in this browser.');
     }
     setIsConnecting(true);
     try {
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const accounts = await provider.request({ method: 'eth_requestAccounts' });
       const address = accounts[0];
-      setWalletAddress(address);
-      setConnectedWallet('metamask');
+      saveWalletSession('metamask', address);
       setSelectedChain('ethereum');
       return address;
     } finally {
@@ -112,16 +140,16 @@ export const WalletProvider = ({ children }) => {
 
   // Connect Phantom (Solana)
   const connectPhantom = useCallback(async () => {
-    if (!window.solana?.isPhantom) {
+    const provider = window.phantom?.solana || window.solana;
+    if (!provider || !provider.isPhantom) {
       window.open('https://phantom.app/', '_blank');
-      throw new Error('Phantom not installed');
+      throw new Error('Phantom wallet extension is not installed in this browser.');
     }
     setIsConnecting(true);
     try {
-      const response = await window.solana.connect();
+      const response = await provider.connect();
       const address = response.publicKey.toString();
-      setWalletAddress(address);
-      setConnectedWallet('phantom');
+      saveWalletSession('phantom', address);
       setSelectedChain('solana');
       return address;
     } finally {
@@ -131,19 +159,51 @@ export const WalletProvider = ({ children }) => {
 
   // Connect Trust Wallet
   const connectTrustWallet = useCallback(async () => {
-    const provider = window.trustwallet || window.ethereum;
+    const provider = window.trustwallet || (window.ethereum?.isTrust ? window.ethereum : null) || window.ethereum;
     if (!provider) {
       window.open('https://trustwallet.com/', '_blank');
-      throw new Error('Trust Wallet not installed');
+      throw new Error('Trust Wallet extension is not installed in this browser.');
     }
     setIsConnecting(true);
     try {
       const accounts = await provider.request({ method: 'eth_requestAccounts' });
       const address = accounts[0];
-      setWalletAddress(address);
-      setConnectedWallet('trustwallet');
+      saveWalletSession('trustwallet', address);
       setSelectedChain('ethereum');
       return address;
+    } finally {
+      setIsConnecting(false);
+    }
+  }, []);
+
+  // Connect Any Injected Browser Wallet (Coinbase, Brave, Rabby, OKX)
+  const connectInjectedWallet = useCallback(async () => {
+    const provider = window.ethereum;
+    if (!provider) {
+      window.open('https://metamask.io/download/', '_blank');
+      throw new Error('No Web3 wallet extension detected in this browser.');
+    }
+    setIsConnecting(true);
+    try {
+      const accounts = await provider.request({ method: 'eth_requestAccounts' });
+      const address = accounts[0];
+      saveWalletSession('browser', address);
+      setSelectedChain('ethereum');
+      return address;
+    } finally {
+      setIsConnecting(false);
+    }
+  }, []);
+
+  // Connect Instant Demo / Test Web3 Wallet for immediate trial without extensions
+  const connectDemoWallet = useCallback(async () => {
+    setIsConnecting(true);
+    try {
+      await new Promise(r => setTimeout(r, 500));
+      const demoAddress = '0x71C845183416b23dD0F1B24B3d332A000A11F34b';
+      saveWalletSession('demo', demoAddress);
+      setSelectedChain('ethereum');
+      return demoAddress;
     } finally {
       setIsConnecting(false);
     }
@@ -153,6 +213,9 @@ export const WalletProvider = ({ children }) => {
   const disconnect = useCallback(() => {
     setConnectedWallet(null);
     setWalletAddress(null);
+    try {
+      localStorage.removeItem(WALLET_SESSION_KEY);
+    } catch {}
   }, []);
 
   // Send EVM transaction (ETH/USDT/USDC/BTC)
@@ -249,6 +312,8 @@ export const WalletProvider = ({ children }) => {
     connectMetaMask,
     connectPhantom,
     connectTrustWallet,
+    connectInjectedWallet,
+    connectDemoWallet,
     disconnect,
     sendEvmTransaction,
     sendSolanaTransaction,

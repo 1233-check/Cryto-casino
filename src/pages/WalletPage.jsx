@@ -8,9 +8,29 @@ import { QRCodeSVG } from 'qrcode.react';
 
 const WALLET_OPTIONS = [
   {
+    id: 'metamask',
+    name: 'MetaMask',
+    desc: 'Ethereum & EVM Web3 Wallet',
+    assets: ['ethereum', 'bnb', 'usdt'],
+    color: '#F6851B',
+    gradient: 'from-[#F6851B]/20 to-[#E2761B]/20',
+    borderColor: 'border-[#F6851B]',
+    iconText: '🦊',
+  },
+  {
+    id: 'phantom',
+    name: 'Phantom',
+    desc: 'Solana Web3 Wallet',
+    assets: ['solana'],
+    color: '#AB9FF2',
+    gradient: 'from-[#AB9FF2]/20 to-[#7D6AE8]/20',
+    borderColor: 'border-[#AB9FF2]',
+    iconText: '👻',
+  },
+  {
     id: 'trustwallet',
     name: 'Trust Wallet',
-    desc: 'Multi-chain mobile wallet',
+    desc: 'Multi-chain mobile & extension',
     assets: ['ethereum', 'bnb', 'solana', 'usdt', 'btc'],
     color: '#3375BB',
     gradient: 'from-[#3375BB]/20 to-[#1B4F7A]/20',
@@ -23,13 +43,24 @@ const WALLET_OPTIONS = [
       </svg>
     ),
   },
+  {
+    id: 'demo',
+    name: 'Demo Wallet',
+    desc: 'Instant Web3 test wallet',
+    assets: ['ethereum', 'bnb', 'usdt'],
+    color: '#00E701',
+    gradient: 'from-[#00E701]/20 to-[#1475E1]/20',
+    borderColor: 'border-[#00E701]',
+    iconText: '⚡',
+  },
 ];
 
 export default function WalletPage({ onNavigate }) {
-  const { user } = useAuth();
+  const { user, loginWithWallet } = useAuth();
   const {
     connectedWallet, walletAddress, selectedChain, setSelectedChain,
     isConnecting, connectMetaMask, connectPhantom, connectTrustWallet,
+    connectInjectedWallet, connectDemoWallet,
     disconnect, sendEvmTransaction, sendSolanaTransaction, addTx, txHistory
   } = useWallet();
 
@@ -51,11 +82,21 @@ export default function WalletPage({ onNavigate }) {
 
   const connectWallet = async (walletId) => {
     try {
-      if (walletId === 'metamask') await connectMetaMask();
-      else if (walletId === 'phantom') await connectPhantom();
-      else if (walletId === 'trustwallet') await connectTrustWallet();
+      let addr;
+      if (walletId === 'metamask') addr = await connectMetaMask();
+      else if (walletId === 'phantom') addr = await connectPhantom();
+      else if (walletId === 'trustwallet') addr = await connectTrustWallet();
+      else if (walletId === 'browser') addr = await connectInjectedWallet();
+      else if (walletId === 'demo') addr = await connectDemoWallet();
+
+      if (addr && loginWithWallet && !user) {
+        await loginWithWallet(addr, walletId);
+      }
     } catch (err) {
       console.error('Wallet connection failed:', err);
+      setStatus('error');
+      setStatusMessage(err.message || 'Wallet connection failed');
+      setTimeout(() => setStatus(null), 4000);
     }
   };
 
@@ -209,8 +250,8 @@ export default function WalletPage({ onNavigate }) {
         >
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 bg-[#00E701] rounded-full animate-pulse shadow-[0_0_10px_#00E701]" />
-            <span className="font-bold text-sm text-white">
-              Trust Wallet
+            <span className="font-bold text-sm text-white capitalize">
+              {connectedWallet === 'trustwallet' ? 'Trust Wallet' : connectedWallet === 'metamask' ? 'MetaMask' : connectedWallet === 'phantom' ? 'Phantom' : connectedWallet === 'demo' ? 'Demo Web3 Wallet' : 'Web3 Wallet'}
             </span>
             <span className="text-[#B1BAD3] font-mono text-sm">{formatAddress(walletAddress)}</span>
           </div>
@@ -263,24 +304,24 @@ export default function WalletPage({ onNavigate }) {
                 Connect Your Wallet
               </h2>
               <p className="text-sm text-[#B1BAD3] mb-5">Choose a wallet to connect for deposits and withdrawals</p>
-              <div className="flex justify-center max-w-sm mx-auto">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
                 {WALLET_OPTIONS.map((w) => (
                   <button
                     key={w.id}
                     onClick={() => connectWallet(w.id)}
                     disabled={isConnecting}
-                    className={`relative group p-5 rounded-2xl border-2 border-transparent bg-gradient-to-br ${w.gradient} hover:${w.borderColor} transition-all flex flex-col items-center gap-3 hover:-translate-y-1 hover:shadow-lg disabled:opacity-50`}
+                    className={`relative group p-4 rounded-2xl border-2 border-transparent bg-gradient-to-br ${w.gradient} hover:${w.borderColor} transition-all flex flex-col items-center gap-2 hover:-translate-y-1 hover:shadow-lg disabled:opacity-50`}
                   >
-                    <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: w.color + '30' }}>
-                      {w.icon}
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl" style={{ backgroundColor: w.color + '30' }}>
+                      {w.icon || w.iconText}
                     </div>
                     <div className="text-center">
-                      <h3 className="font-bold text-sm text-white">{w.name}</h3>
-                      <p className="text-[10px] text-[#B1BAD3] mt-0.5">{w.desc}</p>
+                      <h3 className="font-bold text-xs sm:text-sm text-white">{w.name}</h3>
+                      <p className="text-[10px] text-[#B1BAD3] mt-0.5 line-clamp-1">{w.desc}</p>
                     </div>
                     <div className="flex gap-1 flex-wrap justify-center">
-                      {w.assets.map(c => (
-                        <span key={c} className="text-[9px] bg-white/5 text-[#B1BAD3] px-2 py-0.5 rounded-full font-bold uppercase">
+                      {w.assets.slice(0, 3).map(c => (
+                        <span key={c} className="text-[8px] bg-white/5 text-[#B1BAD3] px-1.5 py-0.5 rounded font-bold uppercase">
                           {ASSETS[c].symbol}
                         </span>
                       ))}

@@ -1,17 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useWallet } from '../context/WalletContext';
 import { motion } from 'framer-motion';
-import { AlertCircle, ArrowLeft, CheckCircle2, User } from 'lucide-react';
+import { 
+  AlertCircle, 
+  ArrowLeft, 
+  CheckCircle2, 
+  Wallet, 
+  Sparkles, 
+  ExternalLink,
+  ShieldCheck,
+  Zap
+} from 'lucide-react';
 
 export default function LoginPage({ onNavigate }) {
-  const { loginWithGoogle, user } = useAuth();
-  const { connectTrustWallet, isConnecting } = useWallet();
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [activeMethod, setActiveMethod] = useState(null); // 'google' | 'trust'
-  const [error, setError] = useState(null);
+  const { loginWithGoogle, loginWithWallet, user } = useAuth();
+  const { 
+    connectMetaMask, 
+    connectPhantom, 
+    connectTrustWallet, 
+    connectInjectedWallet, 
+    connectDemoWallet, 
+    isConnecting 
+  } = useWallet();
 
-  React.useEffect(() => {
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [activeMethod, setActiveMethod] = useState(null); // 'google' | 'metamask' | 'phantom' | 'trust' | 'browser' | 'demo'
+  const [error, setError] = useState(null);
+  const [detectedWallets, setDetectedWallets] = useState({ metamask: false, phantom: false, trust: false, browser: false });
+
+  // Detect which wallet extensions exist in the user's browser
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hasMetaMask = Boolean(window.ethereum?.isMetaMask && !window.ethereum?.isTrust);
+      const hasPhantom = Boolean(window.phantom?.solana || window.solana?.isPhantom);
+      const hasTrust = Boolean(window.trustwallet || window.ethereum?.isTrust);
+      const hasGeneric = Boolean(window.ethereum && !hasMetaMask && !hasTrust);
+      setDetectedWallets({ metamask: hasMetaMask, phantom: hasPhantom, trust: hasTrust, browser: hasGeneric });
+    }
+  }, []);
+
+  useEffect(() => {
     if (user) {
       onNavigate('account');
     }
@@ -49,12 +78,32 @@ export default function LoginPage({ onNavigate }) {
     setError(null);
     setIsLoggingIn(true);
     setActiveMethod(type);
+
     try {
-      if (type === 'trust') await connectTrustWallet();
-      onNavigate('account');
+      let address;
+      if (type === 'metamask') {
+        address = await connectMetaMask();
+      } else if (type === 'phantom') {
+        address = await connectPhantom();
+      } else if (type === 'trust') {
+        address = await connectTrustWallet();
+      } else if (type === 'browser') {
+        address = await connectInjectedWallet();
+      } else if (type === 'demo') {
+        address = await connectDemoWallet();
+      }
+
+      if (address) {
+        // Authenticate into Casino session as a Web3 player
+        if (loginWithWallet) {
+          await loginWithWallet(address, type);
+        }
+        onNavigate('account');
+      }
     } catch (err) {
       console.error(`${type} login failed:`, err);
-      setError(`Wallet Login Failed: ${err.message || 'Please ensure Trust Wallet is unlocked.'}`);
+      let msg = err.message || 'Wallet connection was rejected or cancelled.';
+      setError(msg);
     } finally {
       setIsLoggingIn(false);
       setActiveMethod(null);
@@ -93,13 +142,13 @@ export default function LoginPage({ onNavigate }) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative z-10 w-full max-w-md p-8 bg-[#0F212E]/90 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl flex flex-col items-center"
+        className="relative z-10 w-full max-w-lg p-6 sm:p-8 bg-[#0F212E]/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl flex flex-col items-center max-h-[95vh] overflow-y-auto custom-scrollbar"
       >
         
         {/* Logo */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="bg-gradient-to-tr from-[#1475E1] to-[#00E701] p-3 rounded-xl shadow-[0_0_25px_rgba(20,117,225,0.4)]">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="bg-gradient-to-tr from-[#1475E1] to-[#00E701] p-2.5 rounded-xl shadow-[0_0_25px_rgba(20,117,225,0.4)]">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="18" height="18" rx="4" />
               <circle cx="8.5" cy="8.5" r="1.5" fill="white" />
               <circle cx="15.5" cy="15.5" r="1.5" fill="white" />
@@ -107,7 +156,9 @@ export default function LoginPage({ onNavigate }) {
               <circle cx="8.5" cy="15.5" r="1.5" fill="white" />
             </svg>
           </div>
-          <h1 className="text-3xl font-black font-display tracking-tight text-white">Crypto<span className="text-[#00E701]">Casino</span></h1>
+          <h1 className="text-2xl sm:text-3xl font-black font-display tracking-tight text-white">
+            Crypto<span className="text-[#00E701]">Casino</span>
+          </h1>
         </div>
 
         {user ? (
@@ -137,54 +188,35 @@ export default function LoginPage({ onNavigate }) {
           </div>
         ) : (
           <>
-            <h2 className="text-2xl font-bold text-white mb-2 text-center">Welcome Back</h2>
-            <p className="text-[#B1BAD3] text-center mb-6 text-sm">Connect your wallet or sign in to start playing</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 text-center">Sign In or Connect Wallet</h2>
+            <p className="text-[#B1BAD3] text-center mb-5 text-xs sm:text-sm">Instant anonymous login with Web3 or Google</p>
 
             {error && (
               <motion.div 
                 initial={{ opacity: 0, y: -5 }} 
                 animate={{ opacity: 1, y: 0 }} 
-                className="w-full mb-5 p-3.5 rounded-xl bg-[#ED4163]/15 border border-[#ED4163]/30 text-[#ED4163] text-xs flex items-start gap-2.5"
+                className="w-full mb-4 p-3.5 rounded-xl bg-[#ED4163]/15 border border-[#ED4163]/30 text-[#ED4163] text-xs flex items-start gap-2.5"
               >
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span className="flex-1 leading-relaxed">{error}</span>
+                <div className="flex-1 leading-relaxed">
+                  {error}
+                  {error.includes('not installed') && (
+                    <button
+                      onClick={() => handleWalletLogin('demo')}
+                      className="block mt-2 font-bold text-[#00E701] hover:underline"
+                    >
+                      💡 Or click here to connect Instant Demo Web3 Wallet (no extension required)
+                    </button>
+                  )}
+                </div>
               </motion.div>
             )}
 
-            {/* Wallet Login Options */}
-            <div className="w-full space-y-3 mb-6">
-              <button
-                onClick={() => handleWalletLogin('trust')}
-                disabled={isDisabled}
-                className="w-full relative group overflow-hidden bg-gradient-to-r from-[#3375BB]/10 to-[#1B4F7A]/10 border border-[#3375BB]/30 hover:border-[#3375BB] text-white font-bold text-sm py-3.5 px-5 rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(51,117,187,0.2)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-              >
-                <div className="flex items-center justify-center gap-3">
-                  {activeMethod === 'trust' ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-[#3375BB] rounded-full animate-spin" />
-                  ) : (
-                    <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
-                      <path d="M24 4L6 12v12c0 11.1 7.7 21.5 18 24 10.3-2.5 18-12.9 18-24V12L24 4z" fill="#3375BB"/>
-                      <path d="M24 8l-14 6.2v9.7c0 9 6.3 17.5 14 19.6 7.7-2.1 14-10.6 14-19.6v-9.7L24 8z" fill="white"/>
-                    </svg>
-                  )}
-                  <span>Continue with Trust Wallet</span>
-                  <span className="ml-auto text-[10px] bg-white/5 text-[#B1BAD3] px-2 py-0.5 rounded-full">Multi</span>
-                </div>
-              </button>
-            </div>
-
-            {/* Divider */}
-            <div className="w-full flex items-center gap-4 mb-6">
-              <div className="flex-1 h-px bg-white/10" />
-              <span className="text-xs text-[#557086] font-bold uppercase">or</span>
-              <div className="flex-1 h-px bg-white/10" />
-            </div>
-
-            {/* Google Login */}
+            {/* Google OAuth Button */}
             <button 
               onClick={handleGoogleLogin}
               disabled={isDisabled}
-              className="w-full relative group overflow-hidden bg-white text-black font-bold text-sm py-3.5 px-6 rounded-xl transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+              className="w-full relative group overflow-hidden bg-white text-black font-bold text-sm py-3.5 px-6 rounded-xl transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 mb-5"
             >
               <div className="flex items-center justify-center gap-3">
                 {activeMethod === 'google' ? (
@@ -201,8 +233,122 @@ export default function LoginPage({ onNavigate }) {
               </div>
             </button>
 
-            <div className="mt-8 text-center text-xs text-[#B1BAD3]/60 max-w-xs">
-              By continuing, you agree to our Terms of Service and Privacy Policy. Only users 18+ are permitted to play.
+            {/* Divider */}
+            <div className="w-full flex items-center gap-4 mb-5">
+              <div className="flex-1 h-px bg-white/10" />
+              <span className="text-xs text-[#557086] font-bold uppercase tracking-wider">or connect web3 wallet</span>
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+
+            {/* Web3 Wallet Options Grid */}
+            <div className="w-full space-y-2.5 mb-4">
+              
+              {/* MetaMask */}
+              <button
+                onClick={() => handleWalletLogin('metamask')}
+                disabled={isDisabled}
+                className="w-full relative group bg-gradient-to-r from-[#F6851B]/10 to-[#E2761B]/10 border border-[#F6851B]/30 hover:border-[#F6851B] text-white font-bold text-sm py-3 px-4 rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(246,133,27,0.2)] disabled:opacity-50 text-left flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  {activeMethod === 'metamask' ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-[#F6851B] rounded-full animate-spin" />
+                  ) : (
+                    <span className="text-xl">🦊</span>
+                  )}
+                  <div>
+                    <div className="font-bold text-sm text-white flex items-center gap-2">
+                      MetaMask
+                      {detectedWallets.metamask && (
+                        <span className="text-[10px] bg-[#00E701]/20 text-[#00E701] px-1.5 py-0.2 rounded font-semibold">Detected</span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-[#B1BAD3]">Ethereum, BNB, USDT</span>
+                  </div>
+                </div>
+                <span className="text-xs text-[#557086] group-hover:text-white transition-colors">EVM &rarr;</span>
+              </button>
+
+              {/* Phantom */}
+              <button
+                onClick={() => handleWalletLogin('phantom')}
+                disabled={isDisabled}
+                className="w-full relative group bg-gradient-to-r from-[#AB9FF2]/10 to-[#7D6AE8]/10 border border-[#AB9FF2]/30 hover:border-[#AB9FF2] text-white font-bold text-sm py-3 px-4 rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(171,159,242,0.2)] disabled:opacity-50 text-left flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  {activeMethod === 'phantom' ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-[#AB9FF2] rounded-full animate-spin" />
+                  ) : (
+                    <span className="text-xl">👻</span>
+                  )}
+                  <div>
+                    <div className="font-bold text-sm text-white flex items-center gap-2">
+                      Phantom
+                      {detectedWallets.phantom && (
+                        <span className="text-[10px] bg-[#00E701]/20 text-[#00E701] px-1.5 py-0.2 rounded font-semibold">Detected</span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-[#B1BAD3]">Solana Network (SOL)</span>
+                  </div>
+                </div>
+                <span className="text-xs text-[#557086] group-hover:text-white transition-colors">SOL &rarr;</span>
+              </button>
+
+              {/* Trust Wallet */}
+              <button
+                onClick={() => handleWalletLogin('trust')}
+                disabled={isDisabled}
+                className="w-full relative group bg-gradient-to-r from-[#3375BB]/10 to-[#1B4F7A]/10 border border-[#3375BB]/30 hover:border-[#3375BB] text-white font-bold text-sm py-3 px-4 rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(51,117,187,0.2)] disabled:opacity-50 text-left flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  {activeMethod === 'trust' ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-[#3375BB] rounded-full animate-spin" />
+                  ) : (
+                    <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
+                      <path d="M24 4L6 12v12c0 11.1 7.7 21.5 18 24 10.3-2.5 18-12.9 18-24V12L24 4z" fill="#3375BB"/>
+                      <path d="M24 8l-14 6.2v9.7c0 9 6.3 17.5 14 19.6 7.7-2.1 14-10.6 14-19.6v-9.7L24 8z" fill="white"/>
+                    </svg>
+                  )}
+                  <div>
+                    <div className="font-bold text-sm text-white flex items-center gap-2">
+                      Trust Wallet
+                      {detectedWallets.trust && (
+                        <span className="text-[10px] bg-[#00E701]/20 text-[#00E701] px-1.5 py-0.2 rounded font-semibold">Detected</span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-[#B1BAD3]">Multi-Chain Mobile & Extension</span>
+                  </div>
+                </div>
+                <span className="text-xs text-[#557086] group-hover:text-white transition-colors">Multi &rarr;</span>
+              </button>
+
+              {/* Browser / Injected Web3 (Coinbase, Brave, Rabby, OKX) */}
+              <button
+                onClick={() => handleWalletLogin('browser')}
+                disabled={isDisabled}
+                className="w-full relative group bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-white/30 text-white font-medium text-sm py-2.5 px-4 rounded-xl transition-all flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <Wallet className="w-5 h-5 text-[#1475E1]" />
+                  <span className="text-xs text-[#B1BAD3]">Other Web3 Wallet (Coinbase / Brave / Rabby)</span>
+                </div>
+                <span className="text-xs text-[#557086] group-hover:text-white">&rarr;</span>
+              </button>
+            </div>
+
+            {/* Instant Demo Web3 Wallet */}
+            <div className="w-full pt-2">
+              <button
+                onClick={() => handleWalletLogin('demo')}
+                disabled={isDisabled}
+                className="w-full py-2.5 px-3 bg-[#00E701]/10 hover:bg-[#00E701]/20 border border-[#00E701]/30 rounded-xl transition-all flex items-center justify-center gap-2 text-xs font-bold text-[#00E701]"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>Test Instantly with Demo Web3 Wallet (No extension required)</span>
+              </button>
+            </div>
+
+            <div className="mt-5 text-center text-xs text-[#B1BAD3]/60 max-w-xs">
+              By connecting, you agree to our Terms of Service. Non-custodial provably fair gambling platform.
             </div>
           </>
         )}

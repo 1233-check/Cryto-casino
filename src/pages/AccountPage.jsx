@@ -56,7 +56,7 @@ export default function AccountPage({ onNavigate }) {
             onClick={() => onNavigate('login')}
             className="w-full py-3.5 px-6 bg-[#00E701] hover:bg-[#00E701]/90 text-black font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(0,231,1,0.3)] hover:-translate-y-0.5"
           >
-            Sign In with Google
+            Sign In or Connect Wallet
           </button>
         </div>
       </div>
@@ -106,7 +106,7 @@ export default function AccountPage({ onNavigate }) {
               
               <div className="flex items-center gap-2 text-[#B1BAD3] text-sm mt-1">
                 <Mail className="w-4 h-4 text-[#557086]" />
-                <span>{user.email || 'Google Account'}</span>
+                <span className="truncate max-w-xs">{user.email || user.walletAddress || 'Web3 Account'}</span>
               </div>
 
               <div className="flex items-center gap-2 text-[#557086] text-xs mt-1">
@@ -189,7 +189,9 @@ export default function AccountPage({ onNavigate }) {
             </div>
             <div>
               <span className="text-[#557086] block">Security Method</span>
-              <span className="text-white font-medium">Google OAuth 2.0</span>
+              <span className="text-white font-medium capitalize">
+                {user.isWalletUser ? `${user.walletType || 'Web3'} Connected` : 'Google OAuth 2.0'}
+              </span>
             </div>
           </div>
         </motion.div>

@@ -104,23 +104,63 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithWallet = async (walletAddress, walletType = 'wallet') => {
+    const shortAddress = `${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`;
+    let userData = {
+      id: walletAddress,
+      uid: walletAddress,
+      name: shortAddress,
+      email: `${shortAddress.toLowerCase()}@web3.crypto`,
+      avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${walletAddress}`,
+      balance: 1.00000000,
+      walletAddress: walletAddress,
+      walletType: walletType,
+      isWalletUser: true,
+      createdAt: new Date().toISOString()
+    };
+
+    const userRef = doc(db, 'users', walletAddress);
+    try {
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) {
+        await setDoc(userRef, userData);
+      } else {
+        const data = userSnap.data();
+        userData = { 
+          ...userData, 
+          ...data,
+          balance: typeof data.balance === 'number' ? data.balance : (parseFloat(data.balance) || 1.00000000)
+        };
+      }
+    } catch (dbError) {
+      console.warn('Firestore database access notice for wallet user:', dbError?.message || dbError);
+    }
+
+    setUser(userData);
+    try {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+    } catch {}
+    return userData;
+  };
+
   const logout = async () => {
     try {
       await signOut(auth);
-      setUser(null);
-      try {
-        localStorage.removeItem(USER_STORAGE_KEY);
-      } catch {}
-      if (typeof window !== 'undefined') {
-        window.location.hash = 'login';
-      }
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.warn('SignOut notice:', error);
+    }
+    setUser(null);
+    try {
+      localStorage.removeItem(USER_STORAGE_KEY);
+      localStorage.removeItem('cryptobet_wallet_session');
+    } catch {}
+    if (typeof window !== 'undefined') {
+      window.location.hash = 'login';
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithWallet, logout }}>
       {children}
     </AuthContext.Provider>
   );
