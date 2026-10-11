@@ -26,11 +26,11 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin();
       
       // Allow users to create initial profile without balance manipulation
-      allow create: if isOwner(userId) && (!request.resource.data.keys().hasAny(['balance', 'isAdmin', 'role']) || request.resource.data.balance == 1.0);
+      allow create: if isOwner(userId) && (!request.resource.data.keys().hasAny(['balance', 'balances', 'isAdmin', 'role']) || request.resource.data.balance == 1.0);
       
       // Balance updates and role promotions are strictly server-side (Admin SDK bypasses rules)
       // Allow user to update non-financial fields like avatar or displayName
-      allow update: if (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['balance', 'isAdmin', 'role'])) || isAdmin();
+      allow update: if (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['balance', 'balances', 'isAdmin', 'role'])) || isAdmin();
       
       allow delete: if isAdmin();
     }
