@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if the caller is an authenticated user
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if caller owns the resource
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Helper function to check if caller is an authorized admin
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        request.auth.token.email in ['tejugiri549@gmail.com', 'giribiju456@gmail.com']
+      );
+    }
+
+    // ─── Users Collection ───
+    match /users/{userId} {
+      // Players can read their own profile; admins can read all
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Allow users to create initial profile without balance manipulation
+      allow create: if isOwner(userId) && (!request.resource.data.keys().hasAny(['balance', 'isAdmin', 'role']) || request.resource.data.balance == 1.0);
+      
+      // Balance updates and role promotions are strictly server-side (Admin SDK bypasses rules)
+      // Allow user to update non-financial fields like avatar or displayName
+      allow update: if (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['balance', 'isAdmin', 'role'])) || isAdmin();
+      
+      allow delete: if isAdmin();
+    }
+
+    // ─── Bets Ledger ───
+    match /bets/{betId} {
+      // Users can only read their own bet history; admins can inspect all
+      allow read: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
+      
+      // Bets cannot be forged by clients; only recorded by authoritative backend
+      allow write: if false;
+    }
+
+    // ─── Withdrawals ───
+    match /withdrawals/{withdrawalId} {
+      // Users can inspect their own withdrawal requests; admins inspect all
+      allow read: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
+      
+      // Players can submit a pending withdrawal request
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid && request.resource.data.status == 'pending';
+      
+      // Status changes (approved/rejected/txHash) can only be performed by admins
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Deposits ───
+    match /deposits/{depositId} {
+      allow read: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
+      allow write: if false; // Only verified by blockchain indexer server
+    }
+
+    // ─── System / Admins Config ───
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

@@ -4,6 +4,8 @@ import BetControls from '../components/BetControls';
 import { getGameResult } from '../utils/provablyFair';
 import { getBalance, subtractFromBalance, addToBalance, addHistoryEntry } from '../utils/balance';
 
+import { placeAuthoritativeBet } from '../utils/betApi';
+
 export default function LimboGame({ onBack }) {
   const [balance, setBalanceState] = useState(getBalance());
   const [betAmount, setBetAmount] = useState(1);
@@ -31,7 +33,7 @@ export default function LimboGame({ onBack }) {
 
   const winChance = targetMultiplier >= 1.01 ? (99 / targetMultiplier).toFixed(4) : 0;
 
-  const handleBet = () => {
+  const handleBet = async () => {
     if (isPlaying || betAmount <= 0) return;
     const newBal = subtractFromBalance(betAmount);
     if (newBal === null) return alert('Insufficient balance');
@@ -40,10 +42,24 @@ export default function LimboGame({ onBack }) {
     setIsPlaying(true);
     setStatus('spinning');
     
-    // Provably fair float
-    const float = getGameResult(0, 1);
-    const safeFloat = Math.max(0.00000001, float);
-    const finalResult = Math.max(1, Math.floor((0.99 / safeFloat) * 100) / 100);
+    let finalResult, safeFloat;
+
+    // 1. Attempt authoritative backend bet
+    const backendData = await placeAuthoritativeBet({
+      game: 'limbo',
+      betAmount,
+      params: { targetMultiplier }
+    });
+
+    if (backendData && backendData.multiplier) {
+      finalResult = backendData.multiplier;
+      safeFloat = 0.99 / finalResult;
+    } else {
+      // 2. Client-side provably fair calculation
+      const float = getGameResult(0, 1);
+      safeFloat = Math.max(0.00000001, float);
+      finalResult = Math.max(1, Math.floor((0.99 / safeFloat) * 100) / 100);
+    }
     
     setResult(finalResult);
 
