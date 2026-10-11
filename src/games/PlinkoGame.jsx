@@ -349,7 +349,7 @@ export default function PlinkoGame({ onBack }) {
       <button
         onClick={handleBet}
         disabled={balance < betAmount}
-        className="w-full bg-[#00E701] hover:bg-[#00c701] text-black font-bold py-4 rounded-lg uppercase tracking-wide transition-colors mt-2 disabled:opacity-50"
+        className="w-full bg-primary hover:bg-emerald-600 text-gray-950 font-bold py-4 rounded-xl uppercase tracking-wide transition-all shadow-sm mt-2 disabled:opacity-50"
       >
         Bet
       </button>

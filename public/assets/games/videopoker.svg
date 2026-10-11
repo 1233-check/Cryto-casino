@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" width="320" height="220" fill="none">
+  <defs>
+    <linearGradient id="bgPoker" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141822" />
+      <stop offset="100%" stop-color="#0E1017" />
+    </linearGradient>
+  </defs>
+
+  <rect width="320" height="220" rx="16" fill="url(#bgPoker)" />
+  <rect width="320" height="220" rx="16" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+
+  <!-- 5 Card Royal Flush Spread -->
+  <g transform="translate(48, 55)">
+    <!-- Card 1: 10 -->
+    <rect x="0" y="8" width="45" height="70" rx="6" fill="#F8FAFC" stroke="rgba(255,255,255,0.2)" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.5))" />
+    <text x="8" y="24" font-family="'Plus Jakarta Sans', system-ui" font-weight="800" font-size="12" fill="#0F172A">10</text>
+    <path d="M 22 45 C 20 40 14 45 16 50 C 18 55 22 60 22 60 C 22 60 26 55 28 50 C 30 45 24 40 22 45 Z" fill="#0F172A" />
+
+    <!-- Card 2: J -->
+    <rect x="42" y="4" width="45" height="70" rx="6" fill="#F8FAFC" stroke="rgba(255,255,255,0.2)" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.5))" />
+    <text x="50" y="20" font-family="'Plus Jakarta Sans', system-ui" font-weight="800" font-size="13" fill="#0F172A">J</text>
+    <path d="M 64 42 C 62 37 56 42 58 47 C 60 52 64 57 64 57 C 64 57 68 52 70 47 C 72 42 66 37 64 42 Z" fill="#0F172A" />
+
+    <!-- Card 3: Q -->
+    <rect x="85" y="0" width="45" height="70" rx="6" fill="#F8FAFC" stroke="rgba(255,255,255,0.2)" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.5))" />
+    <text x="93" y="16" font-family="'Plus Jakarta Sans', system-ui" font-weight="800" font-size="13" fill="#0F172A">Q</text>
+    <path d="M 107 38 C 105 33 99 38 101 43 C 103 48 107 53 107 53 C 107 53 111 48 113 43 C 115 38 109 33 107 38 Z" fill="#0F172A" />
+
+    <!-- Card 4: K -->
+    <rect x="130" y="4" width="45" height="70" rx="6" fill="#F8FAFC" stroke="rgba(255,255,255,0.2)" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.5))" />
+    <text x="138" y="20" font-family="'Plus Jakarta Sans', system-ui" font-weight="800" font-size="13" fill="#0F172A">K</text>
+    <path d="M 152 42 C 150 37 144 42 146 47 C 148 52 152 57 152 57 C 152 57 156 52 158 47 C 160 42 154 37 152 42 Z" fill="#0F172A" />
+
+    <!-- Card 5: A -->
+    <rect x="175" y="8" width="45" height="70" rx="6" fill="#F8FAFC" stroke="rgba(255,255,255,0.2)" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.5))" />
+    <text x="183" y="24" font-family="'Plus Jakarta Sans', system-ui" font-weight="800" font-size="13" fill="#0F172A">A</text>
+    <path d="M 197 45 C 195 40 189 45 191 50 C 193 55 197 60 197 60 C 197 60 201 55 203 50 C 205 45 199 40 197 45 Z" fill="#0F172A" />
+  </g>
+
+  <!-- Royal Flush 800x Badge -->
+  <rect x="100" y="145" width="120" height="24" rx="6" fill="#D4AF37" fill-opacity="0.15" stroke="#D4AF37" stroke-opacity="0.3" stroke-width="1" />
+  <text x="160" y="161" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui" font-weight="800" font-size="11" fill="#D4AF37">ROYAL FLUSH (800×)</text>
+
+  <!-- Title Watermark -->
+  <text x="28" y="194" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="800" font-size="13" letter-spacing="0.08em" fill="#64748B">VIDEO POKER</text>
+  <text x="292" y="194" text-anchor="end" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="600" font-size="11" fill="#475569">99.5% RTP</text>
+</svg>

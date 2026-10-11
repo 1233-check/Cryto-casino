@@ -303,10 +303,9 @@ export default function WheelGame({ onBack }) {
       <button
         onClick={handleSpin}
         disabled={isSpinning || betAmount > balance}
-        className="w-full py-4 mt-2 rounded-xl font-bold text-black uppercase tracking-wider transition-all
-                   bg-gradient-to-b from-[#00E701] to-[#00C001] shadow-[0_4px_15px_rgba(0,231,1,0.2)] 
-                   hover:shadow-[0_6px_20px_rgba(0,231,1,0.3)] hover:-translate-y-0.5 active:translate-y-0
-                   disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+        className="w-full py-4 mt-2 rounded-xl font-bold text-gray-950 uppercase tracking-wider transition-all
+                   bg-primary hover:bg-emerald-600 shadow-sm
+                   disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Bet
       </button>
@@ -315,7 +314,7 @@ export default function WheelGame({ onBack }) {
 
   return (
     <GameLayout title="Wheel" onBack={onBack} controls={controls} balance={balance}>
-      <div className="flex-1 flex items-center justify-center p-4 md:p-8 min-h-[400px] md:min-h-[500px] relative bg-gradient-to-b from-[#0F212E] to-[#1A2C38]/50">
+      <div className="flex-1 flex items-center justify-center p-4 md:p-8 min-h-[400px] md:min-h-[500px] relative bg-gradient-to-b from-[#0B0D11] to-[#14171F]/50">
         <canvas 
           ref={canvasRef}
           width={800}
@@ -330,9 +329,9 @@ export default function WheelGame({ onBack }) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.5, opacity: 0 }}
               transition={{ type: "spring", damping: 12, stiffness: 200 }}
-              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-5xl font-black font-display px-8 py-4 rounded-2xl bg-[#0F212E]/95 border-2 backdrop-blur-md shadow-[0_10px_40px_rgba(0,0,0,0.5)] ${
-                winResult > 1 ? 'text-[#00E701] border-[#00E701]/40' : 
-                winResult === 0 ? 'text-[#ED4163] border-[#ED4163]/40' : 
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-5xl font-black font-display px-8 py-4 rounded-2xl bg-surface/95 border backdrop-blur-md shadow-2xl ${
+                winResult > 1 ? 'text-emerald-400 border-emerald-500/40' : 
+                winResult === 0 ? 'text-[#EF4444] border-red-500/40' : 
                 'text-white border-white/20'
               }`}
             >

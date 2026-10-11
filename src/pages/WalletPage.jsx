@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useWallet, ASSETS, DEPOSIT_ADDRESSES } from '../context/WalletContext';
-import { getBalance, addToBalance, subtractFromBalance } from '../utils/balance';
+import { getBalance, addToBalance, subtractFromBalance, getCurrencyConfig, CURRENCIES } from '../utils/balance';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wallet, ArrowDownToLine, ArrowUpFromLine, Copy, Check, ExternalLink, Shield, AlertTriangle, ChevronDown, X, LinkIcon, Unlink, QrCode } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -55,6 +55,14 @@ const WALLET_OPTIONS = [
   },
 ];
 
+const CHAIN_TO_CURRENCY = {
+  ethereum: 'ETH',
+  solana: 'SOL',
+  bnb: 'BNB',
+  usdt: 'USDT',
+  btc: 'BTC'
+};
+
 export default function WalletPage({ onNavigate }) {
   const { user, loginWithWallet } = useAuth();
   const {
@@ -74,11 +82,15 @@ export default function WalletPage({ onNavigate }) {
   const [withdrawAddress, setWithdrawAddress] = useState('');
   const [txHash, setTxHash] = useState('');
 
+  const targetCur = CHAIN_TO_CURRENCY[selectedChain] || 'USDT';
+  const currentAssetBal = getBalance(targetCur);
+  const curConfig = getCurrencyConfig(targetCur);
+
   useEffect(() => {
-    const handleUpdate = () => setBalanceState(getBalance());
+    const handleUpdate = () => setBalanceState(getBalance(targetCur));
     window.addEventListener('balance-update', handleUpdate);
     return () => window.removeEventListener('balance-update', handleUpdate);
-  }, []);
+  }, [targetCur]);
 
   const connectWallet = async (walletId) => {
     try {
@@ -121,22 +133,23 @@ export default function WalletPage({ onNavigate }) {
       setTxHash(hash);
       setStatusMessage('Transaction submitted! Confirming...');
 
-      // Credit directly to casino vault balance immediately upon confirmation
-      addToBalance(numAmount);
-      setBalanceState(getBalance());
+      // Credit directly to specific asset balance immediately upon confirmation
+      addToBalance(numAmount, targetCur);
+      setBalanceState(getBalance(targetCur));
 
       // Record tx
       addTx({
         type: 'deposit',
         chain: selectedChain,
         amount: numAmount,
+        currency: targetCur,
         hash,
         timestamp: Date.now(),
         status: 'confirmed',
       });
 
       setStatus('success');
-      setStatusMessage(`Successfully deposited ${numAmount} ${ASSETS[selectedChain].symbol}`);
+      setStatusMessage(`Successfully deposited ${numAmount} ${targetCur}`);
 
       setTimeout(() => {
         setStatus(null);
@@ -159,9 +172,9 @@ export default function WalletPage({ onNavigate }) {
       setTimeout(() => setStatus(null), 3000);
       return;
     }
-    if (numAmount > balance) {
+    if (numAmount > currentAssetBal) {
       setStatus('error');
-      setStatusMessage('Insufficient balance');
+      setStatusMessage(`Insufficient ${targetCur} balance (Available: ${currentAssetBal})`);
       setTimeout(() => setStatus(null), 3000);
       return;
     }
@@ -170,7 +183,7 @@ export default function WalletPage({ onNavigate }) {
     setStatusMessage('Processing withdrawal...');
 
     try {
-      const newBal = subtractFromBalance(numAmount);
+      const newBal = subtractFromBalance(numAmount, targetCur);
       if (newBal === null) throw new Error('Insufficient balance');
       setBalanceState(newBal);
 
@@ -237,22 +250,29 @@ export default function WalletPage({ onNavigate }) {
   const chainConfig = ASSETS[selectedChain];
 
   return (
-    <div className="flex flex-col h-full bg-[#0F212E] text-white p-4 sm:p-8 w-full max-w-5xl mx-auto">
+    <div className="flex flex-col h-full bg-[#0B0D11] text-white p-4 sm:p-6 w-full max-w-5xl mx-auto">
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-black font-display tracking-tight text-white flex items-center gap-3">
-            <Wallet className="w-8 h-8 text-[#1475E1]" />
-            Wallet
+          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
+            <Wallet className="w-6 h-6 text-emerald-400" />
+            Wallet &amp; Vault
           </h1>
-          <p className="text-[#B1BAD3] text-sm mt-1">Deposit and withdraw crypto across multiple chains</p>
+          <p className="text-slate-400 text-xs mt-0.5">Deposit and withdraw crypto across multi-chain settlement rails</p>
         </div>
-        <div className="bg-[#1A2C38] px-6 py-3 rounded-xl border border-white/10 shadow-inner flex flex-col items-end">
-          <span className="text-xs text-[#B1BAD3] font-bold uppercase tracking-widest mb-1">Game Balance</span>
+        <div className="bg-[#14171F] px-5 py-2.5 rounded-xl border border-white/[0.07] shadow-sm flex flex-col items-end">
+          <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mb-0.5">
+            {targetCur} Balance
+          </span>
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-black font-display text-white tabular-nums">{balance.toFixed(8)}</span>
-            <span className="text-[#00E701] font-bold">BTC</span>
+            <span className="text-xl font-bold text-white tabular-nums">
+              {currentAssetBal.toLocaleString(undefined, { 
+                minimumFractionDigits: curConfig.decimals > 2 ? curConfig.decimals : 2, 
+                maximumFractionDigits: curConfig.decimals 
+              })}
+            </span>
+            <span style={{ color: curConfig.color }} className="font-semibold text-xs">{curConfig.symbol}</span>
           </div>
         </div>
       </div>
@@ -262,82 +282,82 @@ export default function WalletPage({ onNavigate }) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-[#00E701]/10 to-[#1475E1]/10 border border-[#00E701]/20 rounded-xl px-5 py-3 mb-6 flex items-center justify-between"
+          className="bg-[#14171F] border border-emerald-500/20 rounded-xl px-4 py-2.5 mb-5 flex items-center justify-between"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 bg-[#00E701] rounded-full animate-pulse shadow-[0_0_10px_#00E701]" />
-            <span className="font-bold text-sm text-white capitalize">
+          <div className="flex items-center gap-2.5">
+            <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse" />
+            <span className="font-semibold text-xs text-white capitalize">
               {connectedWallet === 'trustwallet' ? 'Trust Wallet' : connectedWallet === 'metamask' ? 'MetaMask' : connectedWallet === 'phantom' ? 'Phantom' : connectedWallet === 'demo' ? 'Demo Web3 Wallet' : 'Web3 Wallet'}
             </span>
-            <span className="text-[#B1BAD3] font-mono text-sm">{formatAddress(walletAddress)}</span>
+            <span className="text-slate-400 font-mono text-xs">{formatAddress(walletAddress)}</span>
           </div>
           <button
             onClick={disconnect}
-            className="flex items-center gap-2 text-xs font-bold text-[#ED4163] hover:text-white bg-[#ED4163]/10 hover:bg-[#ED4163]/20 px-3 py-2 rounded-lg transition-all"
+            className="flex items-center gap-1.5 text-xs font-semibold text-rose-400 hover:text-white bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1.5 rounded-lg transition-all"
           >
-            <Unlink className="w-3.5 h-3.5" />
+            <Unlink className="w-3 h-3" />
             Disconnect
           </button>
         </motion.div>
       )}
 
       {/* Tab Buttons */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-5">
         <button
           onClick={() => setActiveTab('deposit')}
-          className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all ${
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-xs transition-all ${
             activeTab === 'deposit'
-              ? 'bg-[#00E701] text-black shadow-[0_0_20px_rgba(0,231,1,0.3)]'
-              : 'bg-[#1A2C38] text-[#B1BAD3] hover:bg-[#213743] hover:text-white border border-white/5'
+              ? 'bg-[#10B981] text-gray-950 shadow-sm'
+              : 'bg-[#14171F] text-slate-400 hover:bg-[#1A1E27] hover:text-white border border-white/[0.06]'
           }`}
         >
-          <ArrowDownToLine className="w-4 h-4" />
+          <ArrowDownToLine className="w-3.5 h-3.5" />
           Deposit
         </button>
         <button
           onClick={() => setActiveTab('withdraw')}
-          className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all ${
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-xs transition-all ${
             activeTab === 'withdraw'
-              ? 'bg-[#1475E1] text-white shadow-[0_0_20px_rgba(20,117,225,0.4)]'
-              : 'bg-[#1A2C38] text-[#B1BAD3] hover:bg-[#213743] hover:text-white border border-white/5'
+              ? 'bg-white/10 text-white border border-white/[0.12] shadow-sm'
+              : 'bg-[#14171F] text-slate-400 hover:bg-[#1A1E27] hover:text-white border border-white/[0.06]'
           }`}
         >
-          <ArrowUpFromLine className="w-4 h-4" />
+          <ArrowUpFromLine className="w-3.5 h-3.5" />
           Withdraw
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         
         {/* Main Card */}
-        <div className="lg:col-span-2 bg-[#1A2C38] rounded-2xl p-6 sm:p-8 border border-white/5 shadow-2xl relative overflow-hidden">
+        <div className="lg:col-span-2 bg-[#14171F] rounded-2xl p-5 sm:p-7 border border-white/[0.07] shadow-md relative overflow-hidden">
           
           {/* Step 1: Connect Wallet (if not connected) */}
           {!connectedWallet && (
-            <div className="mb-8">
-              <h2 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
-                <LinkIcon className="w-5 h-5 text-[#1475E1]" />
+            <div className="mb-6">
+              <h2 className="text-base font-bold text-white mb-1 flex items-center gap-2">
+                <LinkIcon className="w-4 h-4 text-emerald-400" />
                 Connect Your Wallet
               </h2>
-              <p className="text-sm text-[#B1BAD3] mb-5">Choose a wallet to connect for deposits and withdrawals</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
+              <p className="text-xs text-slate-400 mb-4">Choose a Web3 provider for multi-chain deposits and withdrawals</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-w-2xl mx-auto">
                 {WALLET_OPTIONS.map((w) => (
                   <button
                     key={w.id}
                     onClick={() => connectWallet(w.id)}
                     disabled={isConnecting}
-                    className={`relative group p-4 rounded-2xl border-2 border-transparent bg-gradient-to-br ${w.gradient} hover:${w.borderColor} transition-all flex flex-col items-center gap-2 hover:-translate-y-1 hover:shadow-lg disabled:opacity-50`}
+                    className="relative group p-3.5 rounded-xl border border-white/[0.07] bg-[#10131A] hover:bg-[#181C26] hover:border-white/20 transition-all flex flex-col items-center gap-2 disabled:opacity-50"
                   >
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl" style={{ backgroundColor: w.color + '30' }}>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl bg-white/[0.05]">
                       {w.icon || w.iconText}
                     </div>
                     <div className="text-center">
-                      <h3 className="font-bold text-xs sm:text-sm text-white">{w.name}</h3>
-                      <p className="text-[10px] text-[#B1BAD3] mt-0.5 line-clamp-1">{w.desc}</p>
+                      <h3 className="font-semibold text-xs text-white">{w.name}</h3>
+                      <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{w.desc}</p>
                     </div>
                     <div className="flex gap-1 flex-wrap justify-center">
                       {w.assets.slice(0, 3).map(c => (
-                        <span key={c} className="text-[8px] bg-white/5 text-[#B1BAD3] px-1.5 py-0.5 rounded font-bold uppercase">
+                        <span key={c} className="text-[8px] bg-white/[0.04] text-slate-400 px-1.5 py-0.5 rounded font-medium uppercase">
                           {ASSETS[c].symbol}
                         </span>
                       ))}
@@ -352,21 +372,21 @@ export default function WalletPage({ onNavigate }) {
           {connectedWallet && (
             <>
               {/* Chain Selector */}
-              <div className="mb-6">
-                <label className="text-xs font-bold text-[#B1BAD3] uppercase tracking-wider mb-3 block">Select Network</label>
+              <div className="mb-5">
+                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Network / Chain</label>
                 <div className="relative">
                   <button
                     onClick={() => setShowChainSelector(!showChainSelector)}
-                    className="w-full bg-[#0F212E] border border-white/10 rounded-xl px-5 py-4 flex items-center justify-between hover:border-white/20 transition-colors"
+                    className="w-full bg-[#10131A] border border-white/[0.07] rounded-xl px-4 py-3 flex items-center justify-between hover:border-white/20 transition-colors"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{chainConfig.icon}</span>
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xl">{chainConfig.icon}</span>
                       <div className="text-left">
-                        <div className="font-bold text-white">{chainConfig.name}</div>
-                        <div className="text-xs text-[#B1BAD3]">{chainConfig.symbol}</div>
+                        <div className="font-semibold text-xs text-white">{chainConfig.name}</div>
+                        <div className="text-[10px] text-slate-400">{chainConfig.symbol}</div>
                       </div>
                     </div>
-                    <ChevronDown className={`w-5 h-5 text-[#B1BAD3] transition-transform ${showChainSelector ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showChainSelector ? 'rotate-180' : ''}`} />
                   </button>
 
                   <AnimatePresence>
@@ -375,7 +395,7 @@ export default function WalletPage({ onNavigate }) {
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -5 }}
-                        className="absolute top-full mt-2 left-0 right-0 bg-[#0F212E] border border-white/10 rounded-xl overflow-hidden z-30 shadow-2xl"
+                        className="absolute top-full mt-1.5 left-0 right-0 bg-[#14171F] border border-white/[0.08] rounded-xl overflow-hidden z-30 shadow-2xl"
                       >
                         {Object.entries(ASSETS)
                           .filter(([key]) => {
@@ -386,14 +406,14 @@ export default function WalletPage({ onNavigate }) {
                           <button
                             key={key}
                             onClick={() => { setSelectedChain(key); setShowChainSelector(false); }}
-                            className={`w-full px-5 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors ${selectedChain === key ? 'bg-white/5' : ''}`}
+                            className={`w-full px-4 py-2.5 flex items-center gap-2.5 hover:bg-white/5 transition-colors ${selectedChain === key ? 'bg-white/5' : ''}`}
                           >
-                            <span className="text-xl">{chain.icon}</span>
+                            <span className="text-lg">{chain.icon}</span>
                             <div className="text-left">
-                              <div className="font-bold text-white text-sm">{chain.name}</div>
-                              <div className="text-xs text-[#B1BAD3]">{chain.symbol}</div>
+                              <div className="font-semibold text-white text-xs">{chain.name}</div>
+                              <div className="text-[10px] text-slate-400">{chain.symbol}</div>
                             </div>
-                            {selectedChain === key && <Check className="w-4 h-4 text-[#00E701] ml-auto" />}
+                            {selectedChain === key && <Check className="w-3.5 h-3.5 text-emerald-400 ml-auto" />}
                           </button>
                         ))}
                       </motion.div>
@@ -403,8 +423,8 @@ export default function WalletPage({ onNavigate }) {
               </div>
 
               {/* Amount Input */}
-              <div className="mb-6">
-                <label className="text-xs font-bold text-[#B1BAD3] uppercase tracking-wider mb-3 block">
+              <div className="mb-5">
+                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
                   {activeTab === 'deposit' ? 'Deposit' : 'Withdraw'} Amount ({chainConfig.symbol})
                 </label>
                 <div className="relative">
@@ -414,17 +434,17 @@ export default function WalletPage({ onNavigate }) {
                     min="0"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full bg-[#0F212E] border border-white/10 rounded-xl px-5 py-4 text-xl font-bold focus:outline-none focus:border-[#1475E1] transition-colors pr-20"
+                    className="w-full bg-[#10131A] border border-white/[0.07] rounded-xl px-4 py-3 text-base font-bold focus:outline-none focus:border-white/20 transition-colors pr-16 tabular-nums"
                     placeholder="0.00"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#B1BAD3] font-bold text-sm">{chainConfig.symbol}</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-xs">{chainConfig.symbol}</span>
                 </div>
-                <div className="flex gap-2 mt-3">
+                <div className="flex gap-1.5 mt-2.5">
                   {[0.01, 0.05, 0.1, 0.5, 1].map(val => (
                     <button
                       key={val}
                       onClick={() => setAmount(val.toString())}
-                      className="flex-1 bg-[#0F212E] border border-white/5 rounded-lg py-2 text-xs font-bold text-[#B1BAD3] hover:text-white hover:border-white/20 transition-colors"
+                      className="flex-1 bg-[#10131A] border border-white/[0.06] rounded-lg py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:border-white/20 transition-colors"
                     >
                       {val}
                     </button>
@@ -435,46 +455,45 @@ export default function WalletPage({ onNavigate }) {
               {activeTab === 'deposit' && (
                 <>
                   {/* Deposit Address */}
-                  {/* Deposit Address */}
-                  <div className="mb-6">
-                    <label className="text-xs font-bold text-[#B1BAD3] uppercase tracking-wider mb-3 block">
+                  <div className="mb-5">
+                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
                       Deposit Address ({chainConfig.name})
                     </label>
                     
-                    <div className="bg-[#0F212E] border border-white/10 rounded-xl p-5 mb-4 flex flex-col items-center justify-center">
-                      <div className="bg-white p-3 rounded-xl mb-3 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                    <div className="bg-[#10131A] border border-white/[0.07] rounded-xl p-4 mb-3 flex flex-col items-center justify-center">
+                      <div className="bg-white p-2.5 rounded-xl mb-2.5 shadow-sm">
                         <QRCodeSVG 
                           value={DEPOSIT_ADDRESSES[selectedChain] || ''} 
-                          size={150} 
+                          size={140} 
                           level="H" 
                           includeMargin={false}
                         />
                       </div>
-                      <p className="text-xs text-[#B1BAD3] text-center max-w-xs">Scan this QR code from your mobile wallet to quickly send {chainConfig.symbol}.</p>
+                      <p className="text-[11px] text-slate-400 text-center max-w-xs">Scan this QR code from your mobile wallet to send {chainConfig.symbol}.</p>
                     </div>
 
                     <div className="flex gap-2">
-                      <div className="flex-1 bg-[#0F212E] border border-white/10 rounded-xl px-4 py-3 font-mono text-sm text-[#B1BAD3] truncate">
+                      <div className="flex-1 bg-[#10131A] border border-white/[0.07] rounded-xl px-3.5 py-2.5 font-mono text-xs text-slate-300 truncate">
                         {DEPOSIT_ADDRESSES[selectedChain]}
                       </div>
                       <button
                         onClick={copyAddress}
-                        className="bg-[#0F212E] border border-white/10 rounded-xl px-4 hover:border-white/20 transition-colors flex items-center gap-2"
+                        className="bg-[#10131A] border border-white/[0.07] rounded-xl px-3 hover:border-white/20 transition-colors flex items-center gap-1.5 text-xs"
                       >
-                        {copied ? <Check className="w-4 h-4 text-[#00E701]" /> : <Copy className="w-4 h-4 text-[#B1BAD3]" />}
+                        {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
                       </button>
                     </div>
                   </div>
 
                   {ASSETS[selectedChain].chainType === 'bitcoin' ? (
-                    <div className="w-full bg-[#1A2C38] text-[#B1BAD3] font-bold py-4 rounded-xl text-center text-sm border border-[#F0B90B]/30">
+                    <div className="w-full bg-[#10131A] text-slate-300 font-medium py-3 rounded-xl text-center text-xs border border-amber-500/30">
                       Please send Bitcoin manually to the address above.
                     </div>
                   ) : (
                     <button
                       onClick={handleDeposit}
                       disabled={status === 'loading' || !parseFloat(amount)}
-                      className="w-full bg-gradient-to-r from-[#00E701] to-[#00c701] text-black font-bold py-4 rounded-xl transition-all hover:shadow-[0_0_30px_rgba(0,231,1,0.3)] disabled:opacity-50 disabled:cursor-not-allowed text-lg uppercase tracking-wider"
+                      className="w-full bg-[#10B981] hover:bg-[#059669] text-gray-950 font-bold py-3 rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm uppercase tracking-wider"
                     >
                       {status === 'loading' ? 'Processing...' : `Deposit ${amount} ${chainConfig.symbol}`}
                     </button>
@@ -485,8 +504,8 @@ export default function WalletPage({ onNavigate }) {
               {activeTab === 'withdraw' && (
                 <>
                   {/* Withdrawal Address */}
-                  <div className="mb-6">
-                    <label className="text-xs font-bold text-[#B1BAD3] uppercase tracking-wider mb-3 block">
+                  <div className="mb-5">
+                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
                       Recipient Address
                     </label>
                     <input
@@ -494,16 +513,16 @@ export default function WalletPage({ onNavigate }) {
                       value={withdrawAddress}
                       onChange={(e) => setWithdrawAddress(e.target.value)}
                       placeholder={selectedChain === 'solana' ? 'Enter Solana address...' : 'Enter 0x address...'}
-                      className="w-full bg-[#0F212E] border border-white/10 rounded-xl px-5 py-4 font-mono text-sm focus:outline-none focus:border-[#1475E1] transition-colors"
+                      className="w-full bg-[#10131A] border border-white/[0.07] rounded-xl px-4 py-3 font-mono text-xs focus:outline-none focus:border-white/20 transition-colors text-white"
                     />
                   </div>
 
-                  <div className="bg-[#0F212E] rounded-xl p-4 mb-6 border border-[#F0B90B]/20">
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className="w-5 h-5 text-[#F0B90B] shrink-0 mt-0.5" />
-                      <div className="text-sm text-[#B1BAD3]">
-                        <span className="text-[#F0B90B] font-bold">Important:</span> Ensure the withdrawal address and network are correct. 
-                        Withdrawals to wrong addresses or networks cannot be reversed. Minimum withdrawal: 0.001 {chainConfig.symbol}.
+                  <div className="bg-[#10131A] rounded-xl p-3.5 mb-5 border border-amber-500/20">
+                    <div className="flex items-start gap-2.5">
+                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <div className="text-xs text-slate-400">
+                        <span className="text-amber-400 font-semibold">Important:</span> Ensure the withdrawal address and network are correct. 
+                        Minimum withdrawal: 0.001 {chainConfig.symbol}.
                       </div>
                     </div>
                   </div>
@@ -511,7 +530,7 @@ export default function WalletPage({ onNavigate }) {
                   <button
                     onClick={handleWithdraw}
                     disabled={status === 'loading' || !parseFloat(amount) || !withdrawAddress}
-                    className="w-full bg-gradient-to-r from-[#1475E1] to-[#0d5bc4] text-white font-bold py-4 rounded-xl transition-all hover:shadow-[0_0_30px_rgba(20,117,225,0.3)] disabled:opacity-50 disabled:cursor-not-allowed text-lg uppercase tracking-wider"
+                    className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white font-bold py-3 rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm uppercase tracking-wider"
                   >
                     {status === 'loading' ? 'Processing...' : `Withdraw ${amount} ${chainConfig.symbol}`}
                   </button>
@@ -527,41 +546,38 @@ export default function WalletPage({ onNavigate }) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-[#0F212E]/95 backdrop-blur-sm flex items-center justify-center z-50 rounded-2xl"
+                className="absolute inset-0 bg-[#0B0D11]/95 backdrop-blur-sm flex items-center justify-center z-50 rounded-2xl"
               >
                 {status === 'loading' && (
-                  <div className="flex flex-col items-center gap-4 px-8">
-                    <div className="relative">
-                      <div className="w-16 h-16 border-4 border-white/10 border-t-[#00E701] rounded-full animate-spin" />
-                      <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-b-[#1475E1] rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
-                    </div>
-                    <p className="font-bold text-[#B1BAD3] text-center animate-pulse">{statusMessage}</p>
+                  <div className="flex flex-col items-center gap-3 px-8">
+                    <div className="w-12 h-12 border-3 border-white/10 border-t-emerald-400 rounded-full animate-spin" />
+                    <p className="font-semibold text-slate-300 text-xs text-center">{statusMessage}</p>
                   </div>
                 )}
                 {status === 'success' && (
-                  <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="flex flex-col items-center gap-4 px-8">
-                    <div className="w-20 h-20 bg-[#00E701] rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(0,231,1,0.5)]">
-                      <Check className="w-10 h-10 text-black" strokeWidth={3} />
+                  <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="flex flex-col items-center gap-3 px-8">
+                    <div className="w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center shadow-md">
+                      <Check className="w-7 h-7 text-gray-950" strokeWidth={3} />
                     </div>
-                    <p className="font-bold text-xl text-[#00E701] text-center">{statusMessage}</p>
+                    <p className="font-bold text-base text-emerald-400 text-center">{statusMessage}</p>
                     {txHash && (
                       <a
                         href={`${CHAINS[selectedChain].explorerUrl}/tx/${txHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-sm text-[#1475E1] hover:underline"
+                        className="flex items-center gap-1.5 text-xs text-blue-400 hover:underline"
                       >
-                        View on Explorer <ExternalLink className="w-3.5 h-3.5" />
+                        View on Explorer <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                   </motion.div>
                 )}
                 {status === 'error' && (
-                  <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="flex flex-col items-center gap-4 px-8">
-                    <div className="w-20 h-20 bg-[#ED4163] rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(237,65,99,0.5)]">
-                      <X className="w-10 h-10 text-white" strokeWidth={3} />
+                  <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="flex flex-col items-center gap-3 px-8">
+                    <div className="w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-md">
+                      <X className="w-7 h-7 text-white" strokeWidth={3} />
                     </div>
-                    <p className="font-bold text-xl text-[#ED4163] text-center">{statusMessage}</p>
+                    <p className="font-bold text-base text-rose-400 text-center">{statusMessage}</p>
                   </motion.div>
                 )}
               </motion.div>
@@ -570,56 +586,52 @@ export default function WalletPage({ onNavigate }) {
         </div>
 
         {/* Sidebar Info */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3.5">
           {/* Security Badge */}
-          <div className="bg-[#1A2C38] rounded-2xl p-5 border border-white/5">
-            <div className="flex items-center gap-3 mb-3">
-              <Shield className="w-5 h-5 text-[#00E701]" />
-              <h3 className="font-bold text-white text-sm">Secure Transactions</h3>
+          <div className="bg-[#14171F] rounded-2xl p-4 sm:p-5 border border-white/[0.07] shadow-sm">
+            <div className="flex items-center gap-2.5 mb-2.5">
+              <Shield className="w-4 h-4 text-emerald-400" />
+              <h3 className="font-semibold text-white text-xs">Secure Settlements</h3>
             </div>
-            <ul className="space-y-2 text-xs text-[#B1BAD3]">
+            <ul className="space-y-1.5 text-xs text-slate-400">
               <li className="flex items-start gap-2">
-                <span className="text-[#00E701] mt-0.5">✓</span>
-                All transactions are verified on-chain
+                <span className="text-emerald-400">✓</span>
+                Cryptographically signed transactions
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-[#00E701] mt-0.5">✓</span>
-                Non-custodial wallet connections
+                <span className="text-emerald-400">✓</span>
+                Non-custodial smart contracts &amp; direct rails
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-[#00E701] mt-0.5">✓</span>
-                Multi-chain support (ETH, SOL, BNB, MATIC)
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-[#00E701] mt-0.5">✓</span>
-                Instant deposits, fast withdrawals
+                <span className="text-emerald-400">✓</span>
+                USDT, BTC, ETH, SOL, BNB settlement
               </li>
             </ul>
           </div>
 
           {/* Recent Transactions */}
-          <div className="bg-[#1A2C38] rounded-2xl p-5 border border-white/5 flex-1">
-            <h3 className="font-bold text-white text-sm mb-4">Recent Transactions</h3>
+          <div className="bg-[#14171F] rounded-2xl p-4 sm:p-5 border border-white/[0.07] shadow-sm flex-1">
+            <h3 className="font-semibold text-white text-xs mb-3">Recent Transactions</h3>
             {txHistory.length === 0 ? (
-              <div className="text-center py-8 text-[#B1BAD3] text-xs">
+              <div className="text-center py-6 text-slate-500 text-xs">
                 No transactions yet
               </div>
             ) : (
-              <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
+              <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
                 {txHistory.map((tx, i) => (
-                  <div key={i} className="bg-[#0F212E] rounded-xl p-3 border border-white/5">
+                  <div key={i} className="bg-[#10131A] rounded-xl p-2.5 border border-white/[0.05]">
                     <div className="flex items-center justify-between mb-1">
-                      <span className={`text-xs font-bold uppercase ${tx.type === 'deposit' ? 'text-[#00E701]' : 'text-[#1475E1]'}`}>
+                      <span className={`text-[11px] font-semibold uppercase ${tx.type === 'deposit' ? 'text-emerald-400' : 'text-blue-400'}`}>
                         {tx.type === 'deposit' ? '↓ Deposit' : '↑ Withdraw'}
                       </span>
-                      <span className="text-[10px] text-[#B1BAD3]">
+                      <span className="text-[10px] text-slate-500">
                         {new Date(tx.timestamp).toLocaleTimeString()}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-white text-sm">{tx.amount} {ASSETS[tx.chain]?.symbol}</span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                        tx.status === 'confirmed' ? 'bg-[#00E701]/10 text-[#00E701]' : 'bg-[#F0B90B]/10 text-[#F0B90B]'
+                      <span className="font-bold text-white text-xs">{tx.amount} {ASSETS[tx.chain]?.symbol}</span>
+                      <span className={`text-[9px] px-2 py-0.5 rounded font-semibold ${
+                        tx.status === 'confirmed' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'
                       }`}>
                         {tx.status}
                       </span>

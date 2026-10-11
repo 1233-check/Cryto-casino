@@ -5,9 +5,14 @@
 @layer base {
   body {
     @apply m-0 p-0 font-sans;
-    background-color: #0F212E;
-    color: #FFFFFF;
+    background-color: #0B0D11;
+    color: #F1F5F9;
     overflow-x: hidden;
+    letter-spacing: -0.01em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.025em;
   }
 }
 
@@ -16,35 +21,48 @@
     font-variant-numeric: tabular-nums;
   }
   
-  .glass-card {
-    background: rgba(26, 44, 56, 0.7);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+  .matte-card {
+    background-color: #14171F;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.35);
   }
 
+  .matte-card-elevated {
+    background-color: #1A1E27;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.45);
+  }
+
+  .glass-card {
+    background: rgba(20, 23, 31, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  /* Safe fallback for any lingering glow references without harsh neon blowout */
   .glow-green {
-    box-shadow: 0 0 25px rgba(0, 231, 1, 0.35);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.15);
   }
 
   .glow-blue {
-    box-shadow: 0 0 25px rgba(20, 117, 225, 0.35);
+    box-shadow: 0 2px 10px rgba(59, 130, 246, 0.15);
   }
 
   .glow-red {
-    box-shadow: 0 0 25px rgba(237, 65, 99, 0.35);
+    box-shadow: 0 2px 10px rgba(239, 68, 68, 0.15);
   }
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar - Matte Graphite */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0F212E; }
-::-webkit-scrollbar-thumb { background: #213743; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #2F4553; }
+::-webkit-scrollbar-track { background: #0B0D11; }
+::-webkit-scrollbar-thumb { background: #1E232E; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #2A303D; }
 
 .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #213743; border-radius: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #2F4553; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #1E232E; border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #2A303D; }
 
 /* Remove number input spinners */
 input[type="number"]::-webkit-inner-spin-button,
@@ -56,6 +74,6 @@ input[type="number"] { -moz-appearance: textfield; }
 
 /* Smooth selection */
 ::selection {
-  background: #00E701;
-  color: #000000;
+  background: rgba(16, 185, 129, 0.3);
+  color: #FFFFFF;
 }

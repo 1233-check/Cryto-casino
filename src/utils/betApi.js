@@ -1,5 +1,5 @@
 import { auth } from '../firebase';
-import { setBalance, addHistoryEntry } from './balance';
+import { setBalance, addHistoryEntry, getActiveCurrency } from './balance';
 
 /**
  * Executes a bet through the authoritative backend engine if available,
@@ -29,6 +29,7 @@ export async function placeAuthoritativeBet({ game, betAmount, params = {} }) {
     token = 'guest_player';
   }
 
+  const currency = params.currency || getActiveCurrency();
   const clientSeed = localStorage.getItem('cryptobet_client_seed') || 'provably_fair_client';
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -42,6 +43,7 @@ export async function placeAuthoritativeBet({ game, betAmount, params = {} }) {
       body: JSON.stringify({
         game,
         betAmount,
+        currency,
         clientSeed,
         ...params
       })
@@ -51,7 +53,7 @@ export async function placeAuthoritativeBet({ game, betAmount, params = {} }) {
       const data = await response.json();
       // Synchronize client balance with authoritative server ledger
       if (typeof data.newBalance === 'number') {
-        setBalance(data.newBalance);
+        setBalance(data.newBalance, data.currency || currency);
       }
       return data;
     }
@@ -62,4 +64,5 @@ export async function placeAuthoritativeBet({ game, betAmount, params = {} }) {
 
   return null;
 }
+
 

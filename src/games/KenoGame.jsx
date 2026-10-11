@@ -234,7 +234,7 @@ export default function KenoGame({ onBack }) {
             ? 'bg-[#2A3F4C] text-[#B1BAD3] cursor-not-allowed'
             : selectedNumbers.length === 0
             ? 'bg-[#1A2C38] text-[#557086] border border-white/5 cursor-not-allowed'
-            : 'bg-[#00E701] text-[#0F212E] hover:bg-[#00E701]/90 shadow-[0_0_20px_rgba(0,231,1,0.2)]'
+            : 'bg-primary text-gray-950 hover:bg-emerald-600 shadow-sm'
         }`}
       >
         {isPlaying ? 'Drawing...' : selectedNumbers.length === 0 ? 'Select Numbers' : 'Bet'}

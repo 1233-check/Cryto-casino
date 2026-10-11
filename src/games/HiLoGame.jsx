@@ -160,7 +160,7 @@ export default function HiLoGame({ onBack }) {
             >
                <span className="text-xs uppercase tracking-wider text-[#B1BAD3]">Higher or Same</span>
                <div className="flex items-baseline gap-1">
-                 <span className="text-[#00E701] text-lg leading-none">
+                 <span className="text-emerald-400 text-lg leading-none">
                    {currentCard ? getHighMultiplier(currentCard).toFixed(2) : '0.00'}x
                  </span>
                </div>
@@ -174,7 +174,7 @@ export default function HiLoGame({ onBack }) {
             >
                <span className="text-xs uppercase tracking-wider text-[#B1BAD3]">Lower or Same</span>
                <div className="flex items-baseline gap-1">
-                 <span className="text-[#00E701] text-lg leading-none">
+                 <span className="text-emerald-400 text-lg leading-none">
                    {currentCard ? getLowMultiplier(currentCard).toFixed(2) : '0.00'}x
                  </span>
                </div>
@@ -193,14 +193,14 @@ export default function HiLoGame({ onBack }) {
 
           <div className="bg-[#0F212E] rounded-lg border border-white/[0.04] p-3 flex justify-between items-center">
             <label className="text-xs text-[#B1BAD3] font-semibold uppercase">Profit</label>
-            <div className="text-[#00E701] font-bold font-display text-lg">
+            <div className="text-emerald-400 font-bold font-display text-lg">
               +{(betAmount * cumulativeMultiplier - betAmount).toFixed(4)}
             </div>
           </div>
 
           <button
             onClick={handleCashout}
-            className="w-full bg-[#00E701] hover:bg-[#00c701] text-black font-bold uppercase py-4 rounded-lg transition-colors mt-2"
+            className="w-full bg-primary hover:bg-emerald-600 text-gray-950 font-bold uppercase py-4 rounded-xl transition-all shadow-sm mt-2"
           >
             Cashout ({(betAmount * cumulativeMultiplier).toFixed(2)})
           </button>
@@ -209,7 +209,7 @@ export default function HiLoGame({ onBack }) {
         <button
           onClick={handleStart}
           disabled={betAmount <= 0}
-          className="w-full bg-[#00E701] hover:bg-[#00c701] text-black font-bold uppercase py-4 rounded-lg transition-colors mt-2 disabled:opacity-50"
+          className="w-full bg-primary hover:bg-emerald-600 text-gray-950 font-bold uppercase py-4 rounded-xl transition-all shadow-sm mt-2 disabled:opacity-50"
         >
           Bet
         </button>
@@ -262,7 +262,7 @@ export default function HiLoGame({ onBack }) {
                 
                 {status === 'cashed_out' && (
                   <div className="absolute inset-0 bg-black/60 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                    <div className="text-[#00E701] font-display font-bold text-4xl transform -rotate-12 uppercase tracking-widest border-4 border-[#00E701] px-4 py-2 rounded-lg">
+                    <div className="text-emerald-400 font-display font-bold text-4xl transform -rotate-12 uppercase tracking-widest border-2 border-emerald-500 px-4 py-2 rounded-xl">
                       Won!
                     </div>
                   </div>

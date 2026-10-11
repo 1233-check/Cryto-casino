@@ -246,7 +246,7 @@ export default function BaccaratGame({ onBack }) {
       </div>
 
       <button
-        className="w-full mt-2 bg-[#00E701] hover:bg-[#00c701] text-[#0F212E] font-bold py-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase shadow-[0_0_15px_rgba(0,231,1,0.2)]"
+        className="w-full mt-2 bg-primary hover:bg-emerald-600 text-gray-950 font-bold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase shadow-sm"
         onClick={handleDeal}
         disabled={isDealing || !betTarget || betAmount <= 0}
       >

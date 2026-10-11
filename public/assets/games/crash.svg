@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" width="320" height="220" fill="none">
+  <defs>
+    <linearGradient id="bgCrash" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141822" />
+      <stop offset="100%" stop-color="#0E1017" />
+    </linearGradient>
+    <linearGradient id="lineGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.1" />
+      <stop offset="60%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#34D399" />
+    </linearGradient>
+    <linearGradient id="fillGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="rocketBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#94A3B8" />
+    </linearGradient>
+    <linearGradient id="thruster" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#EF4444" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="320" height="220" rx="16" fill="url(#bgCrash)" />
+  <rect width="320" height="220" rx="16" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+
+  <!-- Subtle Chart Grid Lines -->
+  <line x1="40" y1="40" x2="280" y2="40" stroke="rgba(255,255,255,0.04)" stroke-width="1" stroke-dasharray="3 3" />
+  <line x1="40" y1="80" x2="280" y2="80" stroke="rgba(255,255,255,0.04)" stroke-width="1" stroke-dasharray="3 3" />
+  <line x1="40" y1="120" x2="280" y2="120" stroke="rgba(255,255,255,0.04)" stroke-width="1" stroke-dasharray="3 3" />
+  <line x1="40" y1="160" x2="280" y2="160" stroke="rgba(255,255,255,0.04)" stroke-width="1" />
+
+  <!-- Multiplier Curve Area & Stroke -->
+  <path d="M 40 160 Q 140 155, 195 115 T 235 55 L 235 160 Z" fill="url(#fillGrad)" />
+  <path d="M 40 160 Q 140 155, 195 115 T 235 55" fill="none" stroke="url(#lineGrad)" stroke-width="3.5" stroke-linecap="round" />
+
+  <!-- Target Rocket (Matte Minimalist) -->
+  <g transform="translate(235, 55) rotate(42)">
+    <!-- Thruster Flame -->
+    <path d="M -5 18 Q 0 30, 5 18 Z" fill="url(#thruster)" />
+    <!-- Fins -->
+    <path d="M -9 12 L -14 18 L -6 18 Z" fill="#475569" />
+    <path d="M 9 12 L 14 18 L 6 18 Z" fill="#475569" />
+    <!-- Hull -->
+    <path d="M -7 16 L -7 2 Q 0 -18, 7 2 L 7 16 Z" fill="url(#rocketBody)" />
+    <!-- Cockpit Glass -->
+    <circle cx="0" cy="2" r="3" fill="#10B981" />
+  </g>
+
+  <!-- Telemetry Badge -->
+  <rect x="50" y="50" width="76" height="26" rx="6" fill="#1A1F2B" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+  <text x="88" y="67" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="700" font-size="12" fill="#10B981">14.82×</text>
+
+  <!-- Subtle Title Watermark -->
+  <text x="28" y="194" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="800" font-size="13" letter-spacing="0.08em" fill="#64748B">CRASH</text>
+  <text x="292" y="194" text-anchor="end" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="600" font-size="11" fill="#475569">99% RTP</text>
+</svg>

@@ -106,7 +106,7 @@ export default function LimboGame({ onBack }) {
 
   const isWin = status === 'finished' && result >= targetMultiplier;
   const resultColor = status === 'finished' 
-    ? (isWin ? 'text-[#00E701]' : 'text-[#ff1f44]')
+    ? (isWin ? 'text-emerald-400' : 'text-[#EF4444]')
     : 'text-white';
 
   const controls = (
@@ -149,7 +149,7 @@ export default function LimboGame({ onBack }) {
       <button
         onClick={handleBet}
         disabled={isPlaying || betAmount <= 0}
-        className="w-full bg-[#00E701] hover:bg-[#00c701] text-black font-bold uppercase py-4 rounded-lg transition-colors mt-2 disabled:opacity-50"
+        className="w-full bg-primary hover:bg-emerald-600 text-gray-950 font-bold uppercase py-4 rounded-xl transition-all shadow-sm mt-2 disabled:opacity-50"
       >
         {isPlaying ? 'Betting...' : 'Bet'}
       </button>
@@ -174,7 +174,7 @@ export default function LimboGame({ onBack }) {
         </div>
         
         {status === 'finished' && (
-          <div className={`mt-4 text-xl font-bold font-display ${isWin ? 'text-[#00E701]' : 'text-[#ff1f44]'}`}>
+          <div className={`mt-4 text-xl font-bold font-display ${isWin ? 'text-emerald-400' : 'text-[#EF4444]'}`}>
             {isWin ? `+${(betAmount * targetMultiplier).toFixed(2)}` : `-${betAmount.toFixed(2)}`}
           </div>
         )}

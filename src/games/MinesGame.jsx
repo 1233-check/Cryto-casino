@@ -170,7 +170,7 @@ export default function MinesGame({ onBack }) {
       {!gameActive ? (
         <button 
           onClick={startGame}
-          className="w-full bg-[#00E701] hover:bg-[#00c701] text-black font-bold py-4 rounded-lg uppercase tracking-wide transition-colors mt-2"
+          className="w-full bg-[#10B981] hover:bg-[#059669] text-gray-950 font-bold py-3.5 rounded-xl uppercase tracking-wide transition-all mt-2 shadow-sm text-sm"
         >
           Bet
         </button>
@@ -178,7 +178,7 @@ export default function MinesGame({ onBack }) {
         <button 
           onClick={() => handleCashout()}
           disabled={revealedCount === 0}
-          className="w-full bg-[#00E701] hover:bg-[#00c701] disabled:bg-[#0F212E] disabled:text-[#B1BAD3] disabled:cursor-not-allowed text-black font-bold py-4 rounded-lg uppercase tracking-wide transition-colors mt-2"
+          className="w-full bg-[#F59E0B] hover:bg-[#D97706] disabled:bg-[#151922] disabled:text-slate-500 disabled:cursor-not-allowed text-gray-950 font-bold py-3.5 rounded-xl uppercase tracking-wide transition-all mt-2 shadow-sm text-sm"
         >
           {revealedCount === 0 
             ? 'Cashout' 
@@ -213,15 +213,15 @@ export default function MinesGame({ onBack }) {
               exit={{ opacity: 0, scale: 0.8 }}
               className="absolute z-20 flex flex-col items-center justify-center pointer-events-none"
             >
-              <div className="bg-[#00E701]/20 border-2 border-[#00E701] rounded-2xl p-6 backdrop-blur-md flex flex-col items-center shadow-[0_0_50px_rgba(0,231,1,0.3)]">
-                <div className="text-[#00E701] text-xl font-bold uppercase tracking-widest mb-1 flex items-center gap-2">
+              <div className="bg-surface/95 border border-emerald-500/40 rounded-2xl p-6 backdrop-blur-md flex flex-col items-center shadow-xl">
+                <div className="text-emerald-400 text-xl font-bold uppercase tracking-wider mb-1 flex items-center gap-2">
                   <Trophy className="w-6 h-6" />
                   You Won!
                 </div>
                 <div className="text-white text-4xl font-display font-bold">
                   {lastWinAmount.toFixed(2)}
                 </div>
-                <div className="text-[#00E701] font-semibold mt-1">
+                <div className="text-emerald-400 font-semibold mt-1">
                   {getMultiplier(minesCount, revealedCount).toFixed(2)}×
                 </div>
               </div>
@@ -262,7 +262,7 @@ function Tile({ state, onClick, disabled }) {
       case 'hidden':
         return 'bg-gradient-to-br from-[#2F4553] to-[#1A2C38] hover:brightness-125 cursor-pointer shadow-[0_6px_0_rgba(15,33,46,1)] hover:-translate-y-1 active:translate-y-1 active:shadow-none';
       case 'safe':
-        return 'bg-[#0F212E] border-2 border-[#00E701] shadow-[inset_0_0_20px_rgba(0,231,1,0.2)] cursor-default';
+        return 'bg-[#0B0D11] border-2 border-emerald-500 shadow-sm cursor-default';
       case 'mine':
         return 'bg-[#0F212E] border-2 border-[#ff3b30] shadow-[inset_0_0_30px_rgba(255,59,48,0.4)] cursor-default';
       case 'faded-mine':

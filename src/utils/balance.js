@@ -1,74 +1,228 @@
 import { auth, db } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
-// Balance manager with Firestore real-time sync
+export const CURRENCIES = {
+  USDT: {
+    symbol: 'USDT',
+    icon: '$',
+    prefix: '$',
+    name: 'Tether USD',
+    decimals: 2,
+    defaultBalance: 1000.00,
+    rateUsd: 1.00,
+    color: '#26A17B',
+    chips: [1, 5, 25, 100],
+    defaultBet: 10.00,
+    minBet: 0.10,
+    step: 1.00
+  },
+  BTC: {
+    symbol: 'BTC',
+    icon: '₿',
+    prefix: '₿',
+    name: 'Bitcoin',
+    decimals: 8,
+    defaultBalance: 1.00000000,
+    rateUsd: 65000,
+    color: '#F7931A',
+    chips: [0.0001, 0.001, 0.01, 0.1],
+    defaultBet: 0.001,
+    minBet: 0.00001,
+    step: 0.0001
+  },
+  ETH: {
+    symbol: 'ETH',
+    icon: '⟠',
+    prefix: 'Ξ',
+    name: 'Ethereum',
+    decimals: 6,
+    defaultBalance: 5.000000,
+    rateUsd: 3500,
+    color: '#627EEA',
+    chips: [0.005, 0.01, 0.05, 0.25],
+    defaultBet: 0.01,
+    minBet: 0.0005,
+    step: 0.005
+  },
+  SOL: {
+    symbol: 'SOL',
+    icon: '◎',
+    prefix: '◎',
+    name: 'Solana',
+    decimals: 4,
+    defaultBalance: 50.0000,
+    rateUsd: 150,
+    color: '#9945FF',
+    chips: [0.1, 0.5, 2, 10],
+    defaultBet: 0.5,
+    minBet: 0.01,
+    step: 0.1
+  },
+  BNB: {
+    symbol: 'BNB',
+    icon: '◆',
+    prefix: '◆',
+    name: 'BNB Chain',
+    decimals: 4,
+    defaultBalance: 20.0000,
+    rateUsd: 600,
+    color: '#F0B90B',
+    chips: [0.05, 0.1, 0.5, 2],
+    defaultBet: 0.1,
+    minBet: 0.005,
+    step: 0.05
+  }
+};
+
+const BALANCES_STORAGE_KEY = 'cryptobet_multi_balances';
+const ACTIVE_CURRENCY_KEY = 'cryptobet_active_currency';
 const HISTORY_KEY = 'cryptobet_history';
-const DEFAULT_BALANCE = 1.00000000;
 
-let currentBalance = DEFAULT_BALANCE;
+function getInitialBalances() {
+  try {
+    const saved = localStorage.getItem(BALANCES_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        USDT: typeof parsed.USDT === 'number' ? parsed.USDT : CURRENCIES.USDT.defaultBalance,
+        BTC: typeof parsed.BTC === 'number' ? parsed.BTC : CURRENCIES.BTC.defaultBalance,
+        ETH: typeof parsed.ETH === 'number' ? parsed.ETH : CURRENCIES.ETH.defaultBalance,
+        SOL: typeof parsed.SOL === 'number' ? parsed.SOL : CURRENCIES.SOL.defaultBalance,
+        BNB: typeof parsed.BNB === 'number' ? parsed.BNB : CURRENCIES.BNB.defaultBalance,
+      };
+    }
+  } catch {}
 
-// Listen for Auth changes to attach Firestore listener
+  return {
+    USDT: CURRENCIES.USDT.defaultBalance,
+    BTC: CURRENCIES.BTC.defaultBalance,
+    ETH: CURRENCIES.ETH.defaultBalance,
+    SOL: CURRENCIES.SOL.defaultBalance,
+    BNB: CURRENCIES.BNB.defaultBalance,
+  };
+}
+
+let activeCurrency = 'USDT';
+try {
+  const savedCur = localStorage.getItem(ACTIVE_CURRENCY_KEY);
+  if (savedCur && CURRENCIES[savedCur]) {
+    activeCurrency = savedCur;
+  }
+} catch {}
+
+let currentBalances = getInitialBalances();
+
+// Save balances to localStorage
+function persistBalances() {
+  try {
+    localStorage.setItem(BALANCES_STORAGE_KEY, JSON.stringify(currentBalances));
+  } catch {}
+}
+
+// Sync with Firestore if user is authenticated
 auth.onAuthStateChanged((user) => {
   if (user) {
-    const userRef = doc(db, 'users', user.uid);
-    onSnapshot(userRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const val = docSnap.data().balance;
-        currentBalance = typeof val === 'number' ? val : (parseFloat(val) || 0);
-        dispatchBalanceUpdate(currentBalance);
-      }
-    }, (error) => {
-      console.warn('Firestore balance subscription notice:', error?.message || error);
-    });
-  } else {
-    currentBalance = DEFAULT_BALANCE;
-    dispatchBalanceUpdate(currentBalance);
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      onSnapshot(userRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.balances && typeof data.balances === 'object') {
+            Object.keys(CURRENCIES).forEach(curr => {
+              if (typeof data.balances[curr] === 'number') {
+                currentBalances[curr] = data.balances[curr];
+              }
+            });
+            persistBalances();
+            dispatchBalanceUpdate();
+          } else if (typeof data.balance === 'number') {
+            currentBalances.BTC = data.balance;
+            persistBalances();
+            dispatchBalanceUpdate();
+          }
+        }
+      }, (err) => {
+        console.warn('Firestore balance listener notice:', err?.message || err);
+      });
+    } catch (e) {
+      console.warn('Firestore subscription notice:', e);
+    }
   }
 });
 
-function dispatchBalanceUpdate(balance) {
+function dispatchBalanceUpdate() {
   if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
     try {
+      const current = currentBalances[activeCurrency] || 0;
       const event = typeof CustomEvent === 'function'
-        ? new CustomEvent('balance-update', { detail: { balance } })
-        : { type: 'balance-update', detail: { balance } };
+        ? new CustomEvent('balance-update', { 
+            detail: { 
+              currency: activeCurrency, 
+              balance: current, 
+              balances: { ...currentBalances } 
+            } 
+          })
+        : { type: 'balance-update', detail: { currency: activeCurrency, balance: current } };
       window.dispatchEvent(event);
-    } catch {
-      // Ignore if event dispatch fails in restricted environments
-    }
+    } catch {}
   }
 }
 
-export function getBalance() {
-  return currentBalance;
+export function getActiveCurrency() {
+  return activeCurrency;
 }
 
-// These client-side mutators are now DEPRECATED. 
-// Balance changes should happen strictly on the backend.
-// We keep them returning values so the UI doesn't crash before the backend call completes,
-// but they no longer mutate localStorage. They will be overwritten by the next Firestore snapshot.
-export function setBalance(amount) {
-  const clamped = Math.max(0, parseFloat(amount.toFixed(8)));
-  currentBalance = clamped;
-  dispatchBalanceUpdate(clamped);
+export function getCurrencyConfig(cur = activeCurrency) {
+  return CURRENCIES[cur] || CURRENCIES.USDT;
+}
+
+export function setActiveCurrency(cur) {
+  if (CURRENCIES[cur]) {
+    activeCurrency = cur;
+    try {
+      localStorage.setItem(ACTIVE_CURRENCY_KEY, cur);
+    } catch {}
+    dispatchBalanceUpdate();
+  }
+  return activeCurrency;
+}
+
+export function getBalance(cur = activeCurrency) {
+  return currentBalances[cur] !== undefined ? currentBalances[cur] : (currentBalances[activeCurrency] || 0);
+}
+
+export function getAllBalances() {
+  return { ...currentBalances };
+}
+
+export function setBalance(amount, cur = activeCurrency) {
+  const targetCur = CURRENCIES[cur] ? cur : activeCurrency;
+  const decimals = CURRENCIES[targetCur]?.decimals || 8;
+  const clamped = Math.max(0, parseFloat(Number(amount).toFixed(decimals)));
+  currentBalances[targetCur] = clamped;
+  persistBalances();
+  dispatchBalanceUpdate();
   return clamped;
 }
 
-export function addToBalance(amount) {
-  return setBalance(getBalance() + amount);
+export function addToBalance(amount, cur = activeCurrency) {
+  const targetCur = CURRENCIES[cur] ? cur : activeCurrency;
+  const current = getBalance(targetCur);
+  return setBalance(current + amount, targetCur);
 }
 
-export function subtractFromBalance(amount) {
-  const current = getBalance();
-  if (amount > current) return null; // insufficient
-  return setBalance(current - amount);
+export function subtractFromBalance(amount, cur = activeCurrency) {
+  const targetCur = CURRENCIES[cur] ? cur : activeCurrency;
+  const current = getBalance(targetCur);
+  if (amount > current) return null; // Insufficient
+  return setBalance(current - amount, targetCur);
 }
 
-export function resetBalance() {
-  return setBalance(DEFAULT_BALANCE);
+export function resetBalance(cur = activeCurrency) {
+  const targetCur = CURRENCIES[cur] ? cur : activeCurrency;
+  return setBalance(CURRENCIES[targetCur].defaultBalance, targetCur);
 }
 
-// Bet history (Temporarily keeping in localStorage until backend history endpoint is fully wired for the UI)
 export function getHistory() {
   try {
     return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
@@ -78,14 +232,17 @@ export function getHistory() {
 export function addHistoryEntry(entry) {
   if (!entry || typeof entry !== 'object') return null;
   const history = getHistory();
-  const bet = typeof entry.bet === 'number' ? parseFloat(entry.bet.toFixed(8)) : (parseFloat(entry.bet) || 0);
-  const payout = typeof entry.payout === 'number' ? parseFloat(entry.payout.toFixed(8)) : (parseFloat(entry.payout) || 0);
+  const cur = entry.currency || activeCurrency;
+  const decimals = CURRENCIES[cur]?.decimals || 8;
+  const bet = typeof entry.bet === 'number' ? parseFloat(entry.bet.toFixed(decimals)) : (parseFloat(entry.bet) || 0);
+  const payout = typeof entry.payout === 'number' ? parseFloat(entry.payout.toFixed(decimals)) : (parseFloat(entry.payout) || 0);
   const profit = entry.profit !== undefined && !isNaN(entry.profit)
-    ? parseFloat(Number(entry.profit).toFixed(8))
-    : parseFloat((payout - bet).toFixed(8));
+    ? parseFloat(Number(entry.profit).toFixed(decimals))
+    : parseFloat((payout - bet).toFixed(decimals));
 
   const formattedEntry = {
     ...entry,
+    currency: cur,
     bet,
     payout,
     profit,
@@ -94,6 +251,8 @@ export function addHistoryEntry(entry) {
 
   history.unshift(formattedEntry);
   if (history.length > 100) history.pop();
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  } catch {}
   return formattedEntry;
 }

@@ -297,7 +297,7 @@ export default function VideoPokerGame({ onBack }) {
       <button
         onClick={handleDeal}
         disabled={(gameState === 'IDLE' && (betAmount > getBalance() || betAmount <= 0)) || isAnimating}
-        className="w-full bg-[#00E701] hover:bg-[#00E701]/90 disabled:bg-[#304554] disabled:text-[#B1BAD3] text-[#0F212E] font-bold py-4 rounded-lg transition-colors font-display text-lg tracking-wide shadow-lg"
+        className="w-full bg-primary hover:bg-emerald-600 disabled:bg-gray-800 disabled:text-gray-500 text-gray-950 font-bold py-4 rounded-xl transition-all font-display text-lg tracking-wide shadow-sm"
       >
         {gameState === 'IDLE' ? 'DEAL' : 'DRAW'}
       </button>
@@ -316,7 +316,7 @@ export default function VideoPokerGame({ onBack }) {
                 initial={{ scale: 0.8, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.8, opacity: 0, y: -20 }}
-                className={`text-2xl md:text-4xl font-display font-bold text-center ${result.multi > 0 ? 'text-[#00E701]' : 'text-[#B1BAD3]'}`}
+                className={`text-2xl md:text-4xl font-display font-bold text-center ${result.multi > 0 ? 'text-emerald-400' : 'text-[#B1BAD3]'}`}
               >
                 {result.multi > 0 ? (
                   <>

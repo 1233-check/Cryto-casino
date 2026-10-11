@@ -251,7 +251,7 @@ export default function BlackjackGame({ onBack }) {
       {gameState === STATES.BETTING || gameState === STATES.PAYOUT ? (
         <button 
           onClick={startGame} 
-          className="w-full bg-[#00E701] text-[#0F212E] py-4 rounded-lg font-bold text-lg hover:bg-[#00E701]/90 transition-colors shadow-[0_0_15px_rgba(0,231,1,0.2)]"
+          className="w-full bg-primary text-gray-950 py-4 rounded-xl font-bold text-lg hover:bg-emerald-600 transition-all shadow-sm"
         >
           {gameState === STATES.PAYOUT ? 'Play Again' : 'Bet'}
         </button>
@@ -261,14 +261,14 @@ export default function BlackjackGame({ onBack }) {
             <button 
               onClick={hit} 
               disabled={gameState !== STATES.PLAYER_TURN} 
-              className="bg-[#213743] hover:bg-[#2A4454] border border-white/5 py-3 rounded-lg text-white font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-[#213743] hover:bg-[#2A4454] border border-white/5 py-3 rounded-xl text-white font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Hit
             </button>
             <button 
               onClick={stand} 
               disabled={gameState !== STATES.PLAYER_TURN} 
-              className="bg-[#213743] hover:bg-[#2A4454] border border-white/5 py-3 rounded-lg text-white font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-[#213743] hover:bg-[#2A4454] border border-white/5 py-3 rounded-xl text-white font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Stand
             </button>
@@ -276,7 +276,7 @@ export default function BlackjackGame({ onBack }) {
           <button 
             onClick={doubleDown} 
             disabled={gameState !== STATES.PLAYER_TURN || playerHand.length > 2} 
-            className="w-full bg-[#1A2C38] border border-[#00E701]/30 hover:border-[#00E701] py-3 rounded-lg text-[#00E701] font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-surface border border-emerald-500/30 hover:border-emerald-500 py-3 rounded-xl text-emerald-400 font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Double Down
           </button>
@@ -332,7 +332,7 @@ export default function BlackjackGame({ onBack }) {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 className={`text-2xl md:text-3xl font-display font-bold px-8 py-3 rounded-xl shadow-2xl backdrop-blur-sm
-                  ${message.includes('Win') || message.includes('Blackjack') ? 'bg-[#00E701]/20 text-[#00E701] border border-[#00E701]/30' : 
+                  ${message.includes('Win') || message.includes('Blackjack') ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 
                     message.includes('Lose') || message.includes('Bust') ? 'bg-red-500/20 text-red-500 border border-red-500/30' : 
                     'bg-white/10 text-white border border-white/20'}
                 `}

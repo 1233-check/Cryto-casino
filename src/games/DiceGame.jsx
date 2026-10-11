@@ -138,7 +138,7 @@ export default function DiceGame({ onBack }) {
       <button
         onClick={handleRoll}
         disabled={isRolling}
-        className="w-full bg-[#00E701] hover:bg-[#00c701] text-gray-900 font-bold font-display py-4 rounded-lg transition-colors mt-2 uppercase text-lg disabled:opacity-50"
+        className="w-full bg-[#10B981] hover:bg-[#059669] text-gray-950 font-bold py-3.5 rounded-xl transition-all mt-2 uppercase text-sm sm:text-base disabled:opacity-50 shadow-sm"
       >
         {isRolling ? 'Rolling...' : 'Bet'}
       </button>

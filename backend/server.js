@@ -84,16 +84,30 @@ function shuffleArray(array, serverSeed, clientSeed, nonce) {
 const localBalanceStore = new Map();
 const localBetHistory = [];
 
-function getSafeUserBalance(uid, defaultBal = 1.0) {
+const DEFAULT_BALANCES = {
+  USDT: 1000.0,
+  BTC: 1.0,
+  ETH: 5.0,
+  SOL: 50.0,
+  BNB: 20.0
+};
+
+function getSafeUserBalances(uid) {
   if (!localBalanceStore.has(uid)) {
-    localBalanceStore.set(uid, defaultBal);
+    localBalanceStore.set(uid, { ...DEFAULT_BALANCES });
   }
   return localBalanceStore.get(uid);
 }
 
-function updateSafeUserBalance(uid, newBal) {
-  const clamped = Math.max(0, parseFloat(newBal.toFixed(8)));
-  localBalanceStore.set(uid, clamped);
+function getSafeUserBalance(uid, cur = 'USDT') {
+  const balances = getSafeUserBalances(uid);
+  return balances[cur] !== undefined ? balances[cur] : (DEFAULT_BALANCES[cur] || 0);
+}
+
+function updateSafeUserBalance(uid, newBal, cur = 'USDT') {
+  const balances = getSafeUserBalances(uid);
+  const clamped = Math.max(0, parseFloat(Number(newBal).toFixed(cur === 'USDT' ? 2 : 8)));
+  balances[cur] = clamped;
   return clamped;
 }
 
@@ -130,15 +144,19 @@ app.get('/api/health', (req, res) => {
 // ═══════════════════════════════════════════════
 
 app.get('/api/user/balance', verifyToken, async (req, res) => {
+  const currency = req.query.currency || 'USDT';
   try {
     const userDoc = await db.collection('users').doc(req.user.uid).get();
     if (userDoc.exists) {
-      return res.json({ balance: userDoc.data().balance || 0 });
+      const data = userDoc.data();
+      const balances = data.balances || { ...DEFAULT_BALANCES };
+      return res.json({ balance: balances[currency] !== undefined ? balances[currency] : (DEFAULT_BALANCES[currency] || 0), balances });
     }
   } catch (err) {
     // Fallback if Firestore uninitialized
   }
-  res.json({ balance: getSafeUserBalance(req.user.uid) });
+  const balances = getSafeUserBalances(req.user.uid);
+  res.json({ balance: balances[currency] !== undefined ? balances[currency] : (DEFAULT_BALANCES[currency] || 0), balances });
 });
 
 app.get('/api/user/history', verifyToken, async (req, res) => {
@@ -164,17 +182,20 @@ app.get('/api/user/history', verifyToken, async (req, res) => {
 // ═══════════════════════════════════════════════
 
 app.post('/api/bet', verifyToken, async (req, res) => {
-  const { game, betAmount, ...params } = req.body;
+  const { game, betAmount, currency = 'USDT', ...params } = req.body;
   const uid = req.user.uid;
 
   if (!betAmount || betAmount <= 0) return res.status(400).json({ error: 'Invalid bet amount' });
   if (!game) return res.status(400).json({ error: 'Game type required' });
 
-  // House exposure limits
-  const MAX_BET = 5.0; // 5 BTC max single bet
-  const MAX_PAYOUT = 100.0; // 100 BTC max payout cap
-  if (betAmount > MAX_BET) {
-    return res.status(400).json({ error: `Maximum single bet limit is ${MAX_BET} BTC` });
+  // House exposure limits per currency
+  const MAX_BETS = { USDT: 50000, BTC: 5.0, ETH: 50.0, SOL: 500.0, BNB: 200.0 };
+  const MAX_PAYOUTS = { USDT: 1000000, BTC: 100.0, ETH: 1000.0, SOL: 10000.0, BNB: 5000.0 };
+  const maxBet = MAX_BETS[currency] || 50000;
+  const maxPayout = MAX_PAYOUTS[currency] || 1000000;
+
+  if (betAmount > maxBet) {
+    return res.status(400).json({ error: `Maximum single bet limit is ${maxBet} ${currency}` });
   }
 
   try {
@@ -235,7 +256,7 @@ app.post('/api/bet', verifyToken, async (req, res) => {
     }
 
     // Apply max payout limit
-    gameResult.payout = Math.min(gameResult.payout, MAX_PAYOUT);
+    gameResult.payout = Math.min(gameResult.payout, maxPayout);
 
     // 2. Process Balance Settlement
     let newBalance;
@@ -243,16 +264,19 @@ app.post('/api/bet', verifyToken, async (req, res) => {
       const userRef = db.collection('users').doc(uid);
       newBalance = await db.runTransaction(async (transaction) => {
         const userDoc = await transaction.get(userRef);
-        const currentBalance = userDoc.exists ? (userDoc.data().balance || 1.0) : 1.0;
+        const currentBalances = userDoc.exists && userDoc.data().balances ? userDoc.data().balances : { ...DEFAULT_BALANCES };
+        const currentBalance = currentBalances[currency] !== undefined ? currentBalances[currency] : (DEFAULT_BALANCES[currency] || 0);
         if (currentBalance < betAmount) throw new Error('Insufficient balance');
 
         const computedBal = Math.max(0, currentBalance - betAmount + gameResult.payout);
-        transaction.set(userRef, { balance: computedBal }, { merge: true });
+        currentBalances[currency] = computedBal;
+        transaction.set(userRef, { balances: currentBalances }, { merge: true });
 
         const historyRef = db.collection('bets').doc();
         transaction.set(historyRef, {
           uid,
           game,
+          currency,
           betAmount,
           payout: gameResult.payout,
           profit: gameResult.payout - betAmount,
@@ -266,16 +290,17 @@ app.post('/api/bet', verifyToken, async (req, res) => {
       });
     } catch (firestoreErr) {
       // Memory ledger fallback when Firestore is uninitialized
-      let currentBalance = getSafeUserBalance(uid);
+      let currentBalance = getSafeUserBalance(uid, currency);
       if (currentBalance < betAmount) {
         return res.status(400).json({ error: 'Insufficient balance' });
       }
-      newBalance = updateSafeUserBalance(uid, currentBalance - betAmount + gameResult.payout);
+      newBalance = updateSafeUserBalance(uid, currentBalance - betAmount + gameResult.payout, currency);
       
       localBetHistory.unshift({
         id: 'bet_' + Date.now(),
         uid,
         game,
+        currency,
         betAmount,
         payout: gameResult.payout,
         profit: gameResult.payout - betAmount,
@@ -287,6 +312,7 @@ app.post('/api/bet', verifyToken, async (req, res) => {
 
     res.json({
       ...gameResult,
+      currency,
       newBalance,
       serverSeedHash: hashSeed(serverSeed)
     });

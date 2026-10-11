@@ -77,17 +77,17 @@ export default function AccountPage({ onNavigate }) {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] p-6 text-center">
-        <div className="bg-[#1A2C38] border border-white/5 p-8 rounded-3xl max-w-md w-full shadow-2xl flex flex-col items-center">
-          <div className="p-4 bg-white/5 rounded-2xl mb-4 text-[#B1BAD3]">
-            <Lock className="w-12 h-12 text-[#1475E1]" />
+        <div className="bg-[#14171F] border border-white/[0.07] p-8 rounded-2xl max-w-md w-full shadow-md flex flex-col items-center">
+          <div className="p-3 bg-white/[0.05] rounded-xl mb-4 text-slate-400">
+            <Lock className="w-8 h-8 text-slate-300" />
           </div>
-          <h2 className="text-2xl font-black text-white mb-2">Account Sign In Required</h2>
-          <p className="text-[#B1BAD3] text-sm mb-6">
-            Sign in with Google to view your player profile, user ID, and manage your casino balance.
+          <h2 className="text-xl font-bold text-white mb-2">Account Sign In Required</h2>
+          <p className="text-slate-400 text-xs mb-6">
+            Sign in to view your player profile, user ID, and manage your crypto balances.
           </p>
           <button
             onClick={() => onNavigate('login')}
-            className="w-full py-3.5 px-6 bg-[#00E701] hover:bg-[#00E701]/90 text-black font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(0,231,1,0.3)] hover:-translate-y-0.5"
+            className="w-full py-3 px-5 bg-[#10B981] hover:bg-[#059669] text-gray-950 font-bold rounded-xl transition-all shadow-sm text-xs uppercase tracking-wider"
           >
             Sign In or Connect Wallet
           </button>
@@ -98,80 +98,77 @@ export default function AccountPage({ onNavigate }) {
 
   const formattedDate = user.createdAt 
     ? new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-    : 'Recent Player';
+    : 'Recent Member';
 
   const btcPriceUsd = 65000;
   const balanceUsd = (balance * btcPriceUsd).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
-    <div className="w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="w-full max-w-5xl mx-auto p-4 sm:p-6 space-y-5">
       
-      {/* Header Banner */}
+      {/* Header Banner - Matte Charcoal Card */}
       <motion.div 
-        initial={{ opacity: 0, y: 15 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#1A2C38] via-[#162734] to-[#0F212E] border border-white/10 p-6 sm:p-8 shadow-2xl"
+        className="relative overflow-hidden rounded-2xl bg-[#14171F] border border-white/[0.07] p-5 sm:p-7 shadow-sm"
       >
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#1475E1]/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-1/3 w-64 h-64 bg-[#00E701]/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+          <div className="flex items-center gap-4">
             <div className="relative">
               <img 
                 src={user.avatar} 
                 alt={user.name} 
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#0F212E] border-2 border-[#1475E1] shadow-[0_0_25px_rgba(20,117,225,0.3)] object-cover" 
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-[#10131A] border border-white/10 object-cover" 
               />
-              <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#00E701] border-2 border-[#1A2C38] rounded-full shadow-[0_0_8px_#00E701]" title="Active" />
+              <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-400 border-2 border-[#14171F] rounded-full" title="Active" />
             </div>
 
             <div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-black font-display text-white tracking-tight">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                   {user.name}
                 </h1>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#00E701]/10 text-[#00E701] border border-[#00E701]/30">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  Verified Player
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <ShieldCheck className="w-3 h-3" />
+                  Verified
                 </span>
               </div>
               
-              <div className="flex items-center gap-2 text-[#B1BAD3] text-sm mt-1">
-                <Mail className="w-4 h-4 text-[#557086]" />
+              <div className="flex items-center gap-2 text-slate-400 text-xs mt-1">
+                <Mail className="w-3.5 h-3.5 text-slate-500" />
                 <span className="truncate max-w-xs">{user.email || user.walletAddress || 'Web3 Account'}</span>
               </div>
 
-              <div className="flex items-center gap-2 text-[#557086] text-xs mt-1">
-                <Calendar className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-2 text-slate-500 text-[11px] mt-0.5">
+                <Calendar className="w-3 h-3" />
                 <span>Joined {formattedDate}</span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2.5 w-full md:w-auto">
             {isAdmin && (
               <button
                 onClick={() => onNavigate('admin')}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-[#ED4163]/20 hover:bg-[#ED4163]/30 text-[#ED4163] border border-[#ED4163]/40 font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(237,65,99,0.3)] hover:-translate-y-0.5 text-sm"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-semibold rounded-xl transition-all text-xs"
               >
-                <ShieldAlert className="w-4 h-4" />
-                <span>Admin Portal</span>
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>Admin</span>
               </button>
             )}
             <button
               onClick={() => onNavigate('home')}
-              className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-5 py-3 bg-[#00E701] hover:bg-[#00E701]/90 text-black font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(0,231,1,0.3)] hover:-translate-y-0.5 text-sm"
+              className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#10B981] hover:bg-[#059669] text-gray-950 font-bold rounded-xl transition-all shadow-sm text-xs"
             >
-              <Gamepad2 className="w-4 h-4" />
+              <Gamepad2 className="w-3.5 h-3.5 fill-gray-950" />
               Play Games
             </button>
             <button
               onClick={logout}
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-[#ED4163]/20 text-[#B1BAD3] hover:text-[#ED4163] border border-white/10 rounded-xl transition-all text-sm font-semibold"
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-white/[0.04] hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 border border-white/[0.07] rounded-xl transition-all text-xs font-medium"
               title="Sign Out"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
@@ -179,44 +176,44 @@ export default function AccountPage({ onNavigate }) {
       </motion.div>
 
       {/* Grid: User ID & Balance */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         
         {/* User ID & Identity Card */}
         <motion.div 
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-[#1A2C38] border border-white/10 rounded-3xl p-6 shadow-xl flex flex-col justify-between"
+          transition={{ delay: 0.05 }}
+          className="bg-[#14171F] border border-white/[0.07] rounded-2xl p-5 shadow-sm flex flex-col justify-between"
         >
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#557086] flex items-center gap-1.5">
-                <User className="w-4 h-4 text-[#1475E1]" />
-                Generated Player ID
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-blue-400" />
+                Player ID
               </span>
-              <span className="text-[11px] bg-white/5 text-[#B1BAD3] px-2 py-0.5 rounded-full border border-white/5">
+              <span className="text-[10px] bg-white/[0.05] text-slate-400 px-2 py-0.5 rounded font-mono">
                 UID
               </span>
             </div>
 
-            <p className="text-sm text-[#B1BAD3] mb-3">
+            <p className="text-xs text-slate-400 mb-3">
               Your unique cryptographic player identifier across the casino ecosystem:
             </p>
 
-            <div className="bg-[#0F212E] border border-white/10 rounded-xl p-3.5 flex items-center justify-between gap-3 font-mono text-sm">
+            <div className="bg-[#10131A] border border-white/[0.07] rounded-xl p-3 flex items-center justify-between gap-3 font-mono text-xs">
               <span className="text-white truncate select-all">{user.id}</span>
               <button
                 onClick={copyUserId}
-                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1475E1]/20 hover:bg-[#1475E1]/40 text-[#1475E1] hover:text-white border border-[#1475E1]/30 transition-all text-xs font-bold font-sans"
+                className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 hover:text-white border border-white/[0.08] transition-all text-[11px] font-medium font-sans"
               >
                 {copied ? (
                   <>
-                    <Check className="w-3.5 h-3.5 text-[#00E701]" />
-                    <span className="text-[#00E701]">Copied!</span>
+                    <Check className="w-3 h-3 text-emerald-400" />
+                    <span className="text-emerald-400">Copied</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="w-3.5 h-3.5" />
+                    <Copy className="w-3 h-3" />
                     <span>Copy</span>
                   </>
                 )}
@@ -224,13 +221,13 @@ export default function AccountPage({ onNavigate }) {
             </div>
           </div>
 
-          <div className="mt-6 pt-5 border-t border-white/5 grid grid-cols-2 gap-4 text-xs">
+          <div className="mt-5 pt-4 border-t border-white/[0.05] grid grid-cols-2 gap-3 text-xs">
             <div>
-              <span className="text-[#557086] block">Status</span>
-              <span className="text-[#00E701] font-bold">Authenticated</span>
+              <span className="text-slate-500 text-[11px] block">Status</span>
+              <span className="text-emerald-400 font-semibold">Authenticated</span>
             </div>
             <div>
-              <span className="text-[#557086] block">Security Method</span>
+              <span className="text-slate-500 text-[11px] block">Security Method</span>
               <span className="text-white font-medium capitalize">
                 {user.isWalletUser ? `${user.walletType || 'Web3'} Connected` : 'Google OAuth 2.0'}
               </span>
@@ -240,47 +237,47 @@ export default function AccountPage({ onNavigate }) {
 
         {/* Casino Balance Card */}
         <motion.div 
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-gradient-to-br from-[#1A2C38] to-[#14232e] border border-white/10 rounded-3xl p-6 shadow-xl flex flex-col justify-between"
+          transition={{ delay: 0.1 }}
+          className="bg-[#14171F] border border-white/[0.07] rounded-2xl p-5 shadow-sm flex flex-col justify-between"
         >
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#557086] flex items-center gap-1.5">
-                <Wallet className="w-4 h-4 text-[#00E701]" />
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <Wallet className="w-3.5 h-3.5 text-emerald-400" />
                 Casino Vault Balance
               </span>
-              <span className="text-[11px] bg-[#00E701]/10 text-[#00E701] font-bold px-2 py-0.5 rounded-full border border-[#00E701]/20">
+              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-semibold px-2 py-0.5 rounded border border-emerald-500/20">
                 Live Synced
               </span>
             </div>
 
             <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-3xl sm:text-4xl font-black font-display text-white tabular-nums tracking-tight">
+              <span className="text-2xl sm:text-3xl font-bold text-white tabular-nums tracking-tight">
                 {balance.toFixed(8)}
               </span>
-              <span className="text-lg font-bold text-[#00E701]">BTC</span>
+              <span className="text-base font-semibold text-emerald-400">BTC</span>
             </div>
-            <p className="text-sm text-[#B1BAD3]">
+            <p className="text-xs text-slate-400">
               ≈ ${balanceUsd} USD
             </p>
           </div>
 
-          <div className="mt-6 pt-5 border-t border-white/5 flex gap-3">
+          <div className="mt-5 pt-4 border-t border-white/[0.05] flex gap-2.5">
             <button
               onClick={() => onNavigate('wallet')}
-              className="flex-1 py-3 px-4 bg-[#1475E1] hover:bg-[#1475E1]/80 text-white font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(20,117,225,0.3)] text-sm flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 px-3.5 bg-[#10B981] hover:bg-[#059669] text-gray-950 font-bold rounded-xl transition-all shadow-sm text-xs flex items-center justify-center gap-1.5"
             >
-              <Wallet className="w-4 h-4" />
+              <Wallet className="w-3.5 h-3.5 fill-gray-950" />
               Deposit / Withdraw
             </button>
             <button
               onClick={() => onNavigate('history')}
-              className="py-3 px-4 bg-white/5 hover:bg-white/10 text-white font-semibold rounded-xl transition-all border border-white/10 text-sm flex items-center justify-center gap-2"
+              className="py-2.5 px-3.5 bg-white/[0.05] hover:bg-white/[0.09] text-slate-300 font-semibold rounded-xl transition-all border border-white/[0.07] text-xs flex items-center justify-center gap-1.5"
             >
-              <History className="w-4 h-4" />
-              Bets
+              <History className="w-3.5 h-3.5" />
+              History
             </button>
           </div>
         </motion.div>
@@ -289,97 +286,97 @@ export default function AccountPage({ onNavigate }) {
 
       {/* Security & Provably Fair Section */}
       <motion.div 
-        initial={{ opacity: 0, y: 15 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-[#1A2C38] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-xl"
+        transition={{ delay: 0.15 }}
+        className="bg-[#14171F] border border-white/[0.07] rounded-2xl p-5 sm:p-6 shadow-sm"
       >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 bg-[#00E701]/10 text-[#00E701] rounded-xl border border-[#00E701]/20">
-            <Sparkles className="w-6 h-6" />
+        <div className="flex items-center gap-2.5 mb-5">
+          <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+            <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">Provably Fair & Security Status</h2>
-            <p className="text-xs text-[#B1BAD3]">All game rounds are cryptographically verified using SHA-256 HMAC</p>
+            <h2 className="text-sm font-bold text-white">Provably Fair &amp; Security Protocol</h2>
+            <p className="text-xs text-slate-400">All game rounds are verified using SHA-256 HMAC cryptographic hashing</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-[#0F212E] p-4 rounded-2xl border border-white/5">
-            <span className="text-xs text-[#557086] block mb-1">RNG Protocol</span>
-            <span className="text-sm font-bold text-white">HMAC SHA-256</span>
-            <p className="text-[11px] text-[#B1BAD3] mt-1">Server seed hashed before each wager</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="bg-[#10131A] p-3.5 rounded-xl border border-white/[0.05]">
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">RNG Protocol</span>
+            <span className="text-xs font-semibold text-white">HMAC SHA-256</span>
+            <p className="text-[10px] text-slate-400 mt-0.5">Pre-committed hashed seeds</p>
           </div>
 
-          <div className="bg-[#0F212E] p-4 rounded-2xl border border-white/5">
-            <span className="text-xs text-[#557086] block mb-1">Account Tier</span>
-            <span className="text-sm font-bold text-[#00E701]">VIP Tier 1</span>
-            <p className="text-[11px] text-[#B1BAD3] mt-1">Instant payouts & zero fee wagers</p>
+          <div className="bg-[#10131A] p-3.5 rounded-xl border border-white/[0.05]">
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Account Tier</span>
+            <span className="text-xs font-semibold text-emerald-400">VIP Tier 1</span>
+            <p className="text-[10px] text-slate-400 mt-0.5">Zero-fee settlement</p>
           </div>
 
-          <div className="bg-[#0F212E] p-4 rounded-2xl border border-white/5">
-            <span className="text-xs text-[#557086] block mb-1">Session Protocol</span>
-            <span className="text-sm font-bold text-[#1475E1]">Firebase Secure JWT</span>
-            <p className="text-[11px] text-[#B1BAD3] mt-1">Encrypted authentication handshake</p>
+          <div className="bg-[#10131A] p-3.5 rounded-xl border border-white/[0.05]">
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">Session Protocol</span>
+            <span className="text-xs font-semibold text-blue-400">Secure JWT</span>
+            <p className="text-[10px] text-slate-400 mt-0.5">Encrypted authentication</p>
           </div>
         </div>
 
         {/* Client Seed Customizer */}
-        <div className="mt-6 pt-6 border-t border-white/5">
-          <label className="text-xs font-bold uppercase tracking-wider text-[#B1BAD3] block mb-2">
-            Customize Active Client Seed
+        <div className="mt-5 pt-5 border-t border-white/[0.05]">
+          <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-2">
+            Active Client Seed
           </label>
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-2.5">
             <input
               type="text"
               value={clientSeed}
               onChange={(e) => setClientSeed(e.target.value)}
-              className="flex-1 bg-[#0F212E] border border-white/10 rounded-xl px-4 py-3 text-white font-mono text-sm outline-none focus:border-[#00E701]"
+              className="flex-1 bg-[#10131A] border border-white/[0.07] rounded-xl px-3.5 py-2.5 text-white font-mono text-xs outline-none focus:border-white/20"
               placeholder="Enter custom client seed"
             />
             <button
               onClick={randomizeSeed}
-              className="px-4 py-3 bg-white/5 hover:bg-white/10 text-[#B1BAD3] hover:text-white rounded-xl text-sm font-bold transition-all border border-white/10"
+              className="px-3.5 py-2.5 bg-white/[0.05] hover:bg-white/[0.09] text-slate-300 rounded-xl text-xs font-semibold transition-all border border-white/[0.07]"
             >
               Randomize
             </button>
             <button
               onClick={saveClientSeed}
-              className="px-6 py-3 bg-[#00E701] hover:bg-[#00E701]/90 text-black rounded-xl text-sm font-bold transition-all"
+              className="px-5 py-2.5 bg-[#10B981] hover:bg-[#059669] text-gray-950 rounded-xl text-xs font-bold transition-all shadow-sm"
             >
               {seedSaved ? 'Saved ✓' : 'Update Seed'}
             </button>
           </div>
-          <p className="text-[11px] text-[#557086] mt-2">
-            Your client seed directly alters the cryptographic hash outcome. Changing this ensures absolute unpredictability.
+          <p className="text-[11px] text-slate-500 mt-2">
+            Your client seed directly alters the cryptographic hash outcome. Modifying this guarantees zero house bias.
           </p>
         </div>
       </motion.div>
 
       {/* Responsible Gaming & Limits */}
       <motion.div 
-        initial={{ opacity: 0, y: 15 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
-        className="bg-[#1A2C38] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-xl"
+        transition={{ delay: 0.2 }}
+        className="bg-[#14171F] border border-white/[0.07] rounded-2xl p-5 sm:p-6 shadow-sm"
       >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 bg-[#1475E1]/10 text-[#1475E1] rounded-xl border border-[#1475E1]/20">
-            <ShieldCheck className="w-6 h-6" />
+        <div className="flex items-center gap-2.5 mb-5">
+          <div className="p-2.5 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20">
+            <ShieldCheck className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">Responsible Gaming & Protection</h2>
-            <p className="text-xs text-[#B1BAD3]">Set deposit caps or activate self-exclusion cooling off periods</p>
+            <h2 className="text-sm font-bold text-white">Responsible Gaming &amp; Protection</h2>
+            <p className="text-xs text-slate-400">Configure daily deposit limits or activate temporary cooling-off periods</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-[#0F212E] p-4 rounded-2xl border border-white/5">
-            <span className="text-xs text-[#557086] block mb-2">Daily Deposit Limit</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="bg-[#10131A] p-3.5 rounded-xl border border-white/[0.05]">
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1.5">Daily Deposit Limit</span>
             <select
               value={depositLimit}
               onChange={(e) => updateDepositLimit(e.target.value)}
-              className="w-full bg-[#1A2C38] border border-white/10 rounded-xl p-3 text-sm font-bold text-white outline-none"
+              className="w-full bg-[#14171F] border border-white/[0.07] rounded-xl p-2.5 text-xs font-semibold text-white outline-none"
             >
               <option value="unlimited">No Limit (Default)</option>
               <option value="0.1">0.10 BTC / Day</option>
@@ -388,12 +385,12 @@ export default function AccountPage({ onNavigate }) {
             </select>
           </div>
 
-          <div className="bg-[#0F212E] p-4 rounded-2xl border border-white/5">
-            <span className="text-xs text-[#557086] block mb-2">Self-Exclusion Freeze</span>
+          <div className="bg-[#10131A] p-3.5 rounded-xl border border-white/[0.05]">
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1.5">Self-Exclusion Cooling-Off</span>
             <select
               value={selfExclusion}
               onChange={(e) => updateSelfExclusion(e.target.value)}
-              className="w-full bg-[#1A2C38] border border-white/10 rounded-xl p-3 text-sm font-bold text-white outline-none"
+              className="w-full bg-[#14171F] border border-white/[0.07] rounded-xl p-2.5 text-xs font-semibold text-white outline-none"
             >
               <option value="none">Active (No Freeze)</option>
               <option value="24h">24 Hour Cool-Off</option>

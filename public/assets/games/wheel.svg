@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" width="320" height="220" fill="none">
+  <defs>
+    <linearGradient id="bgWheel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141822" />
+      <stop offset="100%" stop-color="#0E1017" />
+    </linearGradient>
+  </defs>
+
+  <rect width="320" height="220" rx="16" fill="url(#bgWheel)" />
+  <rect width="320" height="220" rx="16" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+
+  <!-- Segmented Casino Wheel -->
+  <g transform="translate(160, 95)">
+    <!-- Outer Rim -->
+    <circle cx="0" cy="0" r="64" fill="#1C212E" stroke="#334155" stroke-width="3" />
+    
+    <!-- Colored Multiplier Segments -->
+    <!-- 1.5x Slate -->
+    <path d="M 0 0 L 0 -58 A 58 58 0 0 1 41 -41 Z" fill="#475569" />
+    <!-- 2x Emerald -->
+    <path d="M 0 0 L 41 -41 A 58 58 0 0 1 58 0 Z" fill="#10B981" />
+    <!-- 3x Blue -->
+    <path d="M 0 0 L 58 0 A 58 58 0 0 1 41 41 Z" fill="#3B82F6" />
+    <!-- 5x Purple -->
+    <path d="M 0 0 L 41 41 A 58 58 0 0 1 0 58 Z" fill="#8B5CF6" />
+    <!-- 9.9x Gold -->
+    <path d="M 0 0 L 0 58 A 58 58 0 0 1 -41 41 Z" fill="#F59E0B" />
+    <!-- 0x Red -->
+    <path d="M 0 0 L -41 41 A 58 58 0 0 1 -58 0 Z" fill="#EF4444" />
+    <!-- 1.2x Muted -->
+    <path d="M 0 0 L -58 0 A 58 58 0 0 1 -41 -41 Z" fill="#334155" />
+    <!-- 2x Emerald -->
+    <path d="M 0 0 L -41 -41 A 58 58 0 0 1 0 -58 Z" fill="#10B981" />
+
+    <!-- Center Hub -->
+    <circle cx="0" cy="0" r="18" fill="#141822" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="0" cy="0" r="6" fill="#10B981" />
+
+    <!-- Top Indicator Needle -->
+    <polygon points="0,-64 -7,-78 7,-78" fill="#FFFFFF" />
+  </g>
+
+  <!-- Title Watermark -->
+  <text x="28" y="194" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="800" font-size="13" letter-spacing="0.08em" fill="#64748B">WHEEL</text>
+  <text x="292" y="194" text-anchor="end" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="600" font-size="11" fill="#475569">98.5% RTP</text>
+</svg>

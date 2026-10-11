@@ -367,7 +367,7 @@ export default function CrashGame({ onBack }) {
   let buttonLabel = 'Place Bet';
   let buttonAction = placeBet;
   let buttonDisabled = false;
-  let buttonColor = 'bg-[#00E701] hover:bg-[#00c701] text-black';
+  let buttonColor = 'bg-[#10B981] hover:bg-[#059669] text-gray-950 font-bold';
 
   if (gamePhase === 'WAITING') {
     if (betState === 'placed') {
@@ -379,7 +379,7 @@ export default function CrashGame({ onBack }) {
     if (betState === 'active') {
       buttonLabel = `Cash Out ${(betAmount * currentMultUI).toFixed(2)}`;
       buttonAction = manualCashout;
-      buttonColor = 'bg-[#00E701] hover:bg-[#00c701] text-black';
+      buttonColor = 'bg-[#F59E0B] hover:bg-[#D97706] text-gray-950 font-bold';
     } else {
       buttonLabel = 'Game Running';
       buttonDisabled = true;

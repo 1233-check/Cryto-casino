@@ -66,25 +66,25 @@ export default function GameGrid({ onSelectGame }) {
 
   const games = [
     // Stake Originals
-    { id: 'crash', title: 'Crash', category: 'Originals', icon: TrendingUp, color: '#00E701', rtp: '99.00%', players: 942, badge: 'HOT', desc: 'Watch multiplier soar and cash out before it busts!' },
-    { id: 'dice', title: 'Dice', category: 'Originals', icon: Dice5, color: '#00E701', rtp: '99.00%', players: 618, badge: 'CLASSIC', desc: 'Roll over or under with adjustable win chances.' },
-    { id: 'mines', title: 'Mines', category: 'Originals', icon: Bomb, color: '#00E701', rtp: '99.00%', players: 785, badge: 'POPULAR', desc: 'Uncover gems and avoid the hidden explosive mines.' },
-    { id: 'limbo', title: 'Limbo', category: 'Originals', icon: ArrowUpToLine, color: '#00E701', rtp: '99.00%', players: 432, desc: 'Target massive multipliers up to 1,000,000x.' },
-    { id: 'plinko', title: 'Plinko', category: 'Originals', icon: Activity, color: '#00E701', rtp: '99.00%', players: 810, badge: 'HOT', desc: 'Drop balls through pins into high multiplier slots.' },
-    { id: 'tower', title: 'Tower', category: 'Originals', icon: LayoutGrid, color: '#00E701', rtp: '99.00%', players: 312, desc: 'Climb the castle tower floor by floor for huge rewards.' },
-    { id: 'hilo', title: 'HiLo', category: 'Originals', icon: History, color: '#00E701', rtp: '99.00%', players: 289, desc: 'Guess if the next card is higher or lower.' },
-    { id: 'keno', title: 'Keno', category: 'Originals', icon: LayoutGrid, color: '#00E701', rtp: '99.00%', players: 350, desc: 'Pick your lucky numbers in this crypto lottery classic.' },
-    { id: 'wheel', title: 'Wheel', category: 'Originals', icon: CircleDot, color: '#00E701', rtp: '98.50%', players: 405, desc: 'Spin the segmented wheel for instant calibrated payouts.' },
-    { id: 'colortrading', title: 'Color Trading', category: 'Originals', icon: Activity, color: '#00E701', rtp: '98.00%', players: 520, desc: 'Predict colors and numbers on fast rounds.' },
+    { id: 'crash', title: 'Crash', category: 'Originals', image: '/assets/games/crash.svg', rtp: '99.00%', players: 942, badge: 'HOT', desc: 'Watch multiplier soar and cash out before bust.' },
+    { id: 'dice', title: 'Dice', category: 'Originals', image: '/assets/games/dice.svg', rtp: '99.00%', players: 618, badge: 'CLASSIC', desc: 'Roll over or under with adjustable win chances.' },
+    { id: 'mines', title: 'Mines', category: 'Originals', image: '/assets/games/mines.svg', rtp: '99.00%', players: 785, badge: 'POPULAR', desc: 'Uncover gems and avoid hidden explosive mines.' },
+    { id: 'limbo', title: 'Limbo', category: 'Originals', image: '/assets/games/limbo.svg', rtp: '99.00%', players: 432, desc: 'Target massive multipliers up to 1,000,000x.' },
+    { id: 'plinko', title: 'Plinko', category: 'Originals', image: '/assets/games/plinko.svg', rtp: '99.00%', players: 810, badge: 'HOT', desc: 'Drop balls through pins into multiplier slots.' },
+    { id: 'tower', title: 'Tower', category: 'Originals', image: '/assets/games/tower.svg', rtp: '99.00%', players: 312, desc: 'Climb the fortress tower floor by floor.' },
+    { id: 'hilo', title: 'HiLo', category: 'Originals', image: '/assets/games/hilo.svg', rtp: '99.00%', players: 289, desc: 'Guess if the next card is higher or lower.' },
+    { id: 'keno', title: 'Keno', category: 'Originals', image: '/assets/games/keno.svg', rtp: '99.00%', players: 350, desc: 'Pick your lucky numbers in this crypto classic.' },
+    { id: 'wheel', title: 'Wheel', category: 'Originals', image: '/assets/games/wheel.svg', rtp: '98.50%', players: 405, desc: 'Spin the segmented wheel for instant payouts.' },
+    { id: 'colortrading', title: 'Color Trading', category: 'Originals', image: '/assets/games/colortrading.svg', rtp: '98.00%', players: 520, desc: 'Predict colors and numbers on fast rounds.' },
     
     // Table & Live
-    { id: 'roulette', title: 'Roulette', category: 'Table', icon: CircleDot, color: '#ED4163', rtp: '97.30%', players: 430, badge: 'EUROPEAN', desc: 'Single-zero European roulette with full felt board.' },
-    { id: 'blackjack', title: 'Blackjack', category: 'Cards', icon: Gamepad2, color: '#1475E1', rtp: '99.50%', players: 670, badge: 'LIVE', desc: 'Classic 21 with Double, Split, and dealer stands on 17.' },
-    { id: 'baccarat', title: 'Baccarat', category: 'Cards', icon: Gamepad2, color: '#1475E1', rtp: '98.94%', players: 310, desc: 'Player, Banker or Tie with standard Punto Banco rules.' },
-    { id: 'videopoker', title: 'Video Poker', category: 'Cards', icon: Gamepad2, color: '#1475E1', rtp: '99.54%', players: 260, desc: 'Jacks or Better draw poker with royal flush jackpots.' },
+    { id: 'roulette', title: 'Roulette', category: 'Table', image: '/assets/games/roulette.svg', rtp: '97.30%', players: 430, badge: 'EUROPEAN', desc: 'Single-zero European roulette with full felt board.' },
+    { id: 'blackjack', title: 'Blackjack', category: 'Cards', image: '/assets/games/blackjack.svg', rtp: '99.50%', players: 670, badge: 'LIVE', desc: 'Classic 21 with Double, Split, and dealer stands on 17.' },
+    { id: 'baccarat', title: 'Baccarat', category: 'Cards', image: '/assets/games/baccarat.svg', rtp: '98.94%', players: 310, desc: 'Player, Banker or Tie with standard Punto Banco rules.' },
+    { id: 'videopoker', title: 'Video Poker', category: 'Cards', image: '/assets/games/videopoker.svg', rtp: '99.54%', players: 260, desc: 'Jacks or Better draw poker with royal flush jackpots.' },
     
     // Slots
-    { id: 'slots', title: 'Slots', category: 'Slots', icon: Target, color: '#F6C743', rtp: '96.50%', players: 580, badge: 'JACKPOT', desc: '5-reel crypto slot with expanding wilds and scatter bonuses.' },
+    { id: 'slots', title: 'Slots', category: 'Slots', image: '/assets/games/slots.svg', rtp: '96.50%', players: 580, badge: 'JACKPOT', desc: '5-reel crypto slot with expanding wilds and scatter bonuses.' },
   ];
 
   const categories = [
@@ -102,89 +102,84 @@ export default function GameGrid({ onSelectGame }) {
   });
 
   return (
-    <div className="max-w-[1440px] mx-auto w-full space-y-8 pb-12">
+    <div className="max-w-[1440px] mx-auto w-full space-y-6 pb-12">
       
-      {/* Premium Hero Promo Showcase */}
-      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#0F212E] via-[#142A3B] to-[#1A384D] border border-white/10 p-6 sm:p-10 shadow-2xl">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-[#00E701]/15 via-[#1475E1]/15 to-transparent rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-[#FFD700]/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+      {/* Matte Editorial Hero Banner */}
+      <div className="relative rounded-2xl overflow-hidden bg-[#12151D] border border-white/[0.07] p-6 sm:p-8 shadow-md">
+        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00E701]/10 border border-[#00E701]/30 text-[#00E701] text-xs font-black uppercase tracking-wider mb-4">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Next-Gen Crypto Casino • 99% Theoretical RTP</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-slate-300 text-xs font-medium mb-3">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Provably Fair Crypto Gaming • 99% Theoretical RTP</span>
             </div>
             
-            <h1 className="text-3xl sm:text-5xl font-black font-display tracking-tight text-white leading-tight mb-4">
-              Play With Crypto. <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E701] via-[#00E5FF] to-[#1475E1]">
-                Win Provably Fair.
-              </span>
+            <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight mb-2.5">
+              Verified Odds. Instant Payouts. <br />
+              <span className="text-slate-400 font-normal">Non-custodial gaming on your terms.</span>
             </h1>
             
-            <p className="text-sm sm:text-base text-[#B1BAD3] leading-relaxed mb-6">
-              15 high-speed crypto titles with mathematical provable fairness, non-custodial wallet connectivity, and instant zero-fee withdrawals.
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed mb-5">
+              15 high-speed crypto titles with SHA-256 cryptographic provable fairness, multi-currency balances, and immediate zero-fee settlement.
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
               <button 
                 onClick={() => onSelectGame('crash')}
-                className="px-6 py-3.5 bg-gradient-to-r from-[#00E701] to-[#00C853] hover:brightness-110 text-black font-extrabold text-sm rounded-xl transition-all shadow-[0_0_25px_rgba(0,231,1,0.35)] hover:-translate-y-0.5 flex items-center gap-2"
+                className="px-5 py-2.5 bg-[#10B981] hover:bg-[#059669] text-gray-950 font-bold text-xs rounded-xl transition-all shadow-sm hover:-translate-y-0.5 flex items-center gap-2"
               >
-                <Flame className="w-4 h-4 fill-black" />
-                <span>Play Crash Now</span>
+                <Flame className="w-4 h-4 fill-gray-950" />
+                <span>Play Crash</span>
               </button>
               
               <button 
                 onClick={() => onSelectGame('plinko')}
-                className="px-5 py-3.5 bg-white/10 hover:bg-white/15 text-white font-bold text-sm rounded-xl border border-white/10 transition-all hover:-translate-y-0.5 flex items-center gap-2"
+                className="px-5 py-2.5 bg-white/[0.06] hover:bg-white/[0.1] text-white font-medium text-xs rounded-xl border border-white/[0.08] transition-all hover:-translate-y-0.5 flex items-center gap-2"
               >
-                <Play className="w-4 h-4 fill-white" />
+                <Play className="w-3.5 h-3.5 fill-white" />
                 <span>Explore Plinko</span>
               </button>
             </div>
           </div>
 
-          {/* Quick Stats Badges */}
-          <div className="grid grid-cols-2 gap-3 w-full lg:w-auto">
-            <div className="bg-[#0F212E]/80 backdrop-blur-md p-4 rounded-2xl border border-white/5 text-center">
-              <div className="text-2xl font-black font-display text-[#00E701]">99.00%</div>
-              <div className="text-[11px] font-bold text-[#557086] uppercase tracking-wider mt-0.5">Highest RTP</div>
+          {/* Clean Quick Stats (Matte Charcoal Cards) */}
+          <div className="grid grid-cols-2 gap-2.5 w-full lg:w-auto">
+            <div className="bg-[#171A23] p-3.5 rounded-xl border border-white/[0.06] text-center min-w-[125px]">
+              <div className="text-xl font-bold font-mono text-emerald-400">99.00%</div>
+              <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Highest RTP</div>
             </div>
-            <div className="bg-[#0F212E]/80 backdrop-blur-md p-4 rounded-2xl border border-white/5 text-center">
-              <div className="text-2xl font-black font-display text-[#00E5FF]">15</div>
-              <div className="text-[11px] font-bold text-[#557086] uppercase tracking-wider mt-0.5">Casino Titles</div>
+            <div className="bg-[#171A23] p-3.5 rounded-xl border border-white/[0.06] text-center min-w-[125px]">
+              <div className="text-xl font-bold font-mono text-blue-400">15</div>
+              <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Casino Titles</div>
             </div>
-            <div className="bg-[#0F212E]/80 backdrop-blur-md p-4 rounded-2xl border border-white/5 text-center">
-              <div className="text-2xl font-black font-display text-[#FFD700]">0 Sec</div>
-              <div className="text-[11px] font-bold text-[#557086] uppercase tracking-wider mt-0.5">Instant Payouts</div>
+            <div className="bg-[#171A23] p-3.5 rounded-xl border border-white/[0.06] text-center min-w-[125px]">
+              <div className="text-xl font-bold font-mono text-amber-400">0 Sec</div>
+              <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Instant Payouts</div>
             </div>
-            <div className="bg-[#0F212E]/80 backdrop-blur-md p-4 rounded-2xl border border-white/5 text-center">
-              <div className="text-2xl font-black font-display text-[#ED4163]">100%</div>
-              <div className="text-[11px] font-bold text-[#557086] uppercase tracking-wider mt-0.5">Provably Fair</div>
+            <div className="bg-[#171A23] p-3.5 rounded-xl border border-white/[0.06] text-center min-w-[125px]">
+              <div className="text-xl font-bold font-mono text-slate-200">100%</div>
+              <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Provably Fair</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Filter Tabs and Search Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Category Pill Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 custom-scrollbar">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 custom-scrollbar">
           {categories.map(cat => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-4 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center gap-2 ${
+              className={`px-3.5 py-2 rounded-xl font-medium text-xs whitespace-nowrap transition-all flex items-center gap-2 ${
                 activeCategory === cat.id
-                  ? 'bg-[#2F4553] text-white shadow-sm border border-white/10'
-                  : 'bg-[#1A2C38] text-[#B1BAD3] hover:text-white hover:bg-[#213743] border border-transparent'
+                  ? 'bg-white/10 text-white border border-white/[0.12] shadow-sm'
+                  : 'bg-[#14171F] text-slate-400 hover:text-white hover:bg-[#1A1E27] border border-white/[0.04]'
               }`}
             >
               <span>{cat.label}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                activeCategory === cat.id ? 'bg-[#00E701] text-black' : 'bg-black/20 text-[#557086]'
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-semibold ${
+                activeCategory === cat.id ? 'bg-emerald-500/20 text-emerald-400' : 'bg-black/30 text-slate-500'
               }`}>
                 {cat.count}
               </span>
@@ -192,146 +187,139 @@ export default function GameGrid({ onSelectGame }) {
           ))}
         </div>
 
-        {/* Search input */}
-        <div className="relative w-full md:w-72">
-          <Search className="w-4 h-4 text-[#557086] absolute left-3.5 top-1/2 -translate-y-1/2" />
+        {/* Clean Search Input */}
+        <div className="relative w-full md:w-64">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search casino games..."
-            className="w-full bg-[#1A2C38] border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-[#557086] focus:outline-none focus:border-[#1475E1] transition-colors"
+            placeholder="Search games..."
+            className="w-full bg-[#14171F] border border-white/[0.07] rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-white/20 transition-colors"
           />
         </div>
       </div>
 
-      {/* Game Cards Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {filteredGames.map(game => {
-          const Icon = game.icon;
-          return (
-            <motion.div
-              key={game.id}
-              whileHover={{ y: -5 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => onSelectGame(game.id)}
-              className="group relative bg-[#1A2C38] rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 shadow-lg hover:shadow-[0_15px_30px_rgba(0,0,0,0.5)] cursor-pointer flex flex-col aspect-[4/5]"
-            >
-              {/* Badge */}
-              {game.badge && (
-                <div className={`absolute top-2.5 right-2.5 z-20 text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow-md ${
-                  game.badge === 'HOT' ? 'bg-[#ED4163] text-white shadow-[#ED4163]/30' :
-                  game.badge === 'JACKPOT' ? 'bg-[#FFD700] text-black shadow-[#FFD700]/30' :
-                  'bg-[#00E701] text-black shadow-[#00E701]/30'
-                }`}>
-                  {game.badge}
+      {/* Game Cards Grid (High-Quality Artwork Covers) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
+        {filteredGames.map(game => (
+          <motion.div
+            key={game.id}
+            whileHover={{ y: -3 }}
+            transition={{ duration: 0.15 }}
+            onClick={() => onSelectGame(game.id)}
+            className="group relative bg-[#14171F] rounded-2xl overflow-hidden border border-white/[0.07] hover:border-white/20 shadow-sm hover:shadow-xl cursor-pointer flex flex-col"
+          >
+            {/* Badge */}
+            {game.badge && (
+              <div className={`absolute top-2.5 right-2.5 z-20 text-[9px] font-bold uppercase px-2 py-0.5 rounded-md shadow-sm ${
+                game.badge === 'HOT' ? 'bg-rose-500 text-white' :
+                game.badge === 'JACKPOT' ? 'bg-amber-400 text-gray-950' :
+                'bg-emerald-500 text-gray-950'
+              }`}>
+                {game.badge}
+              </div>
+            )}
+
+            {/* Game Artwork Cover Image */}
+            <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#0F1219]">
+              <img 
+                src={game.image} 
+                alt={game.title}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                loading="lazy"
+              />
+
+              {/* Matte Hover Action Overlay */}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center p-3 text-center z-10 backdrop-blur-[1px]">
+                <div className="px-3.5 py-1.5 rounded-lg bg-[#10B981] text-gray-950 font-bold text-xs flex items-center gap-1.5 shadow-md group-hover:scale-105 transition-transform">
+                  <Play className="w-3.5 h-3.5 fill-gray-950 ml-0.5" />
+                  <span>Play</span>
                 </div>
-              )}
+                <span className="text-[10px] text-emerald-400 font-semibold mt-2">RTP {game.rtp}</span>
+              </div>
+            </div>
 
-              {/* Game Visual Top Area */}
-              <div className="flex-1 bg-gradient-to-b from-[#0F212E] to-[#152532] flex items-center justify-center relative overflow-hidden p-6">
-                {/* Ambient glow matching game color */}
-                <div 
-                  className="absolute inset-0 opacity-10 group-hover:opacity-30 transition-opacity duration-500 blur-2xl"
-                  style={{ backgroundColor: game.color }}
-                />
-
-                <Icon 
-                  className="w-16 h-16 transition-all duration-300 group-hover:scale-110 drop-shadow-md relative z-10"
-                  style={{ color: game.color }}
-                />
-
-                {/* Hover Action Overlay */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center p-3 text-center z-20">
-                  <div className="w-11 h-11 rounded-full bg-[#00E701] flex items-center justify-center shadow-[0_0_20px_rgba(0,231,1,0.5)] mb-2 group-hover:scale-105 transition-transform">
-                    <Play className="w-5 h-5 fill-black ml-0.5" />
-                  </div>
-                  <span className="text-xs font-black text-white uppercase tracking-wider">Play Now</span>
-                  <span className="text-[10px] text-[#00E701] font-bold mt-1">RTP {game.rtp}</span>
-                </div>
+            {/* Game Info Bottom Card Area */}
+            <div className="p-3 bg-[#14171F] border-t border-white/[0.04] flex flex-col justify-between flex-1">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-xs sm:text-sm text-white group-hover:text-emerald-400 transition-colors truncate">
+                  {game.title}
+                </h3>
+                <span className="text-[10px] font-medium text-slate-400 bg-white/[0.04] px-1.5 py-0.5 rounded">
+                  {game.rtp}
+                </span>
               </div>
 
-              {/* Game Info Bottom Area */}
-              <div className="p-3.5 bg-[#1A2C38] border-t border-white/[0.04] flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm text-white group-hover:text-[#00E701] transition-colors truncate">
-                    {game.title}
-                  </h3>
-                  <span className="text-[10px] font-bold text-[#557086] bg-black/20 px-1.5 py-0.5 rounded">
-                    {game.rtp}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] text-[#557086] mt-1.5">
-                  <span className="truncate">{game.category}</span>
-                  <span className="flex items-center gap-1 text-[10px] text-[#B1BAD3]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#00E701]" />
-                    {game.players}
-                  </span>
-                </div>
+              <div className="flex items-center justify-between text-[11px] text-slate-500 mt-1.5">
+                <span className="truncate">{game.category}</span>
+                <span className="flex items-center gap-1 text-[10px] text-slate-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  {game.players}
+                </span>
               </div>
-            </motion.div>
-          );
-        })}
+            </div>
+          </motion.div>
+        ))}
       </div>
 
-      {/* Live Bets Community Activity Ticker (Hallmark of Stake/Roobet) */}
-      <div className="bg-[#1A2C38] rounded-2xl border border-white/5 overflow-hidden shadow-xl mt-8">
-        <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between bg-[#213743]/50">
+      {/* Live Bets Community Activity Ticker (Matte Institutional Ledger) */}
+      <div className="bg-[#14171F] rounded-2xl border border-white/[0.07] overflow-hidden shadow-sm mt-6">
+        <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between bg-[#171A23]">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#00E701] animate-pulse" />
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider font-display">
-              Live Bets & Community Activity
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <h2 className="text-xs font-semibold text-white uppercase tracking-wider">
+              Live Bets &amp; Activity Ledger
             </h2>
           </div>
-          <span className="text-xs text-[#557086] font-semibold">Real-Time Casino Ledger</span>
+          <span className="text-[11px] text-slate-400 font-medium">Real-Time Provably Fair Ticker</span>
         </div>
 
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#162734] text-[#557086] uppercase font-bold text-[10px] tracking-wider border-b border-white/5">
+            <thead className="bg-[#10131A] text-slate-400 uppercase font-semibold text-[10px] tracking-wider border-b border-white/[0.05]">
               <tr>
-                <th className="px-4 py-3">Game</th>
-                <th className="px-4 py-3">Player</th>
-                <th className="px-4 py-3">Time</th>
-                <th className="px-4 py-3">Bet Amount</th>
-                <th className="px-4 py-3">Multiplier</th>
-                <th className="px-4 py-3 text-right">Payout</th>
+                <th className="px-4 py-2.5">Game</th>
+                <th className="px-4 py-2.5">Player</th>
+                <th className="px-4 py-2.5">Time</th>
+                <th className="px-4 py-2.5">Bet Amount</th>
+                <th className="px-4 py-2.5">Multiplier</th>
+                <th className="px-4 py-2.5 text-right">Payout</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 font-mono">
+            <tbody className="divide-y divide-white/[0.04] font-mono text-[11px]">
               <AnimatePresence initial={false}>
                 {liveBets.map(b => (
                   <motion.tr
                     key={b.id}
-                    initial={{ opacity: 0, y: -8 }}
+                    initial={{ opacity: 0, y: -6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.25 }}
+                    transition={{ duration: 0.2 }}
                     className="hover:bg-white/[0.02] transition-colors"
                   >
-                    <td className="px-4 py-2.5 font-bold text-white flex items-center gap-1.5 font-sans">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#1475E1]" />
+                    <td className="px-4 py-2.5 font-medium text-white flex items-center gap-2 font-sans text-xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
                       {b.game}
                     </td>
-                    <td className="px-4 py-2.5 text-[#B1BAD3]">
+                    <td className="px-4 py-2.5 text-slate-400">
                       {b.user}
                     </td>
-                    <td className="px-4 py-2.5 text-[#557086]">
+                    <td className="px-4 py-2.5 text-slate-500">
                       {b.time}
                     </td>
                     <td className="px-4 py-2.5 text-white">
-                      {b.bet.toFixed(4)} <span className="text-[#00E701] text-[10px]">BTC</span>
+                      {b.bet.toFixed(4)} <span className="text-slate-400 text-[10px]">BTC</span>
                     </td>
                     <td className="px-4 py-2.5">
-                      <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                        b.win ? 'bg-[#00E701]/15 text-[#00E701]' : 'bg-[#ED4163]/15 text-[#ED4163]'
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
+                        b.win ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
                       }`}>
                         {b.mult}
                       </span>
                     </td>
-                    <td className={`px-4 py-2.5 text-right font-bold ${
-                      b.win ? 'text-[#00E701]' : 'text-[#557086]'
+                    <td className={`px-4 py-2.5 text-right font-medium ${
+                      b.win ? 'text-emerald-400' : 'text-slate-500'
                     }`}>
                       {b.payout > 0 ? `+${b.payout.toFixed(4)} BTC` : '0.0000 BTC'}
                     </td>
@@ -344,62 +332,62 @@ export default function GameGrid({ onSelectGame }) {
       </div>
 
       {/* Security, Trust & Provably Fair Footer Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-        <div className="bg-[#1A2C38] p-5 rounded-2xl border border-white/5 flex items-start gap-3.5">
-          <div className="p-2.5 rounded-xl bg-[#00E701]/10 text-[#00E701] shrink-0">
-            <ShieldCheck className="w-5 h-5" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-2">
+        <div className="bg-[#14171F] p-4 rounded-xl border border-white/[0.07] flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 shrink-0">
+            <ShieldCheck className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="font-bold text-sm text-white mb-1">100% Provably Fair</h4>
-            <p className="text-xs text-[#B1BAD3] leading-relaxed">
-              Every single round is verified using SHA-256 HMAC cryptographic seeds. Results cannot be manipulated.
+            <h4 className="font-semibold text-xs text-white mb-0.5">100% Provably Fair</h4>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Every round is deterministically generated with SHA-256 HMAC cryptographic seeds. Results cannot be manipulated.
             </p>
           </div>
         </div>
 
-        <div className="bg-[#1A2C38] p-5 rounded-2xl border border-white/5 flex items-start gap-3.5">
-          <div className="p-2.5 rounded-xl bg-[#1475E1]/10 text-[#1475E1] shrink-0">
-            <Zap className="w-5 h-5" />
+        <div className="bg-[#14171F] p-4 rounded-xl border border-white/[0.07] flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 shrink-0">
+            <Zap className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="font-bold text-sm text-white mb-1">Instant Automated Cashouts</h4>
-            <p className="text-xs text-[#B1BAD3] leading-relaxed">
-              Fast non-custodial payouts directly to your Bitcoin, Ethereum, Solana, or USDT wallet address.
+            <h4 className="font-semibold text-xs text-white mb-0.5">Instant Non-Custodial Settlements</h4>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Fast automated withdrawals across USDT, Bitcoin, Ethereum, Solana, and BNB network rails.
             </p>
           </div>
         </div>
 
-        <div className="bg-[#1A2C38] p-5 rounded-2xl border border-white/5 flex items-start gap-3.5">
-          <div className="p-2.5 rounded-xl bg-[#FFD700]/10 text-[#FFD700] shrink-0">
-            <Crown className="w-5 h-5" />
+        <div className="bg-[#14171F] p-4 rounded-xl border border-white/[0.07] flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400 shrink-0">
+            <Crown className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="font-bold text-sm text-white mb-1">High Roller VIP Club</h4>
-            <p className="text-xs text-[#B1BAD3] leading-relaxed">
-              Level up your wager volume to unlock daily reload bonuses, rakeback, and dedicated VIP account management.
+            <h4 className="font-semibold text-xs text-white mb-0.5">Transparent House Margin</h4>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Low fixed 1.00% house edge with full mathematically provable return-to-player verification.
             </p>
           </div>
         </div>
       </div>
 
-      {/* 18+ Responsible Gaming & Compliance Footer */}
-      <div className="mt-8 pt-6 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#557086]">
-        <div className="flex items-center gap-3">
-          <span className="w-7 h-7 rounded-full border border-[#ED4163]/50 text-[#ED4163] font-bold text-xs flex items-center justify-center">
+      {/* Responsible Gaming & Compliance Footer */}
+      <div className="pt-5 border-t border-white/[0.06] flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+        <div className="flex items-center gap-2.5">
+          <span className="w-6 h-6 rounded-full border border-rose-500/40 text-rose-400 font-bold text-[10px] flex items-center justify-center">
             18+
           </span>
-          <span>
-            Play Responsibly. Crypto gambling involves risk. Only wager funds you can afford to lose.
+          <span className="text-[11px]">
+            Play responsibly. Crypto gambling involves risk. Only wager amounts you can afford to lose.
           </span>
         </div>
-        <div className="flex items-center gap-6 text-[#B1BAD3]">
+        <div className="flex items-center gap-5 text-slate-400 text-[11px]">
           <span className="hover:text-white cursor-pointer transition-colors" onClick={() => onSelectGame('account')}>
             Provably Fair Verifier
           </span>
           <span className="hover:text-white cursor-pointer transition-colors" onClick={() => onSelectGame('account')}>
             Responsible Gaming
           </span>
-          <span className="text-[#557086]">© 2026 CryptoBet. Non-Custodial Entertainment.</span>
+          <span className="text-slate-600">© 2026 CryptoBet.</span>
         </div>
       </div>
     </div>

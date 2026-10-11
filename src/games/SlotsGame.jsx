@@ -435,8 +435,8 @@ export default function SlotsGame({ onBack }) {
       <button 
         onClick={spin}
         disabled={isPlaying}
-        className={`w-full py-4 mt-auto rounded-xl font-bold text-lg transition-all shadow-[0_0_20px_rgba(0,231,1,0.2)] ${
-          isPlaying ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-[#00E701] text-black hover:bg-[#00E701]/90 hover:-translate-y-1'
+        className={`w-full py-4 mt-auto rounded-xl font-bold text-lg transition-all shadow-sm ${
+          isPlaying ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-primary text-gray-950 hover:bg-emerald-600 hover:-translate-y-0.5'
         }`}
       >
         {isPlaying ? 'Spinning...' : 'SPIN'}
@@ -446,11 +446,11 @@ export default function SlotsGame({ onBack }) {
 
   return (
     <GameLayout title="Slots" balance={balance} onBack={onBack} controls={controls}>
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0F212E] to-[#1A2C38]/50" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0B0D11] to-[#14171F]/50" />
       <div className="absolute inset-0" ref={canvasRef} />
       
       {lastWin > 0 && !isPlaying && (
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-[#00E701]/20 border border-[#00E701] text-[#00E701] px-8 py-3 rounded-2xl backdrop-blur-sm animate-bounce shadow-[0_0_30px_rgba(0,231,1,0.3)] z-10">
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-surface/90 border border-emerald-500/40 text-emerald-400 px-8 py-3 rounded-2xl backdrop-blur-sm animate-bounce shadow-xl z-10">
           <span className="font-display font-black text-3xl">+{lastWin.toFixed(2)}</span>
         </div>
       )}
