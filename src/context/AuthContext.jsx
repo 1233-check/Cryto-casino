@@ -14,8 +14,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export const ADMIN_EMAILS = [
   'tejugiri549@gmail.com',
-  'giribiju456@gmail.com',
-  'admin@cryptocasino.com'
+  'giribiju456@gmail.com'
 ];
 
 export const isUserAdmin = (user) => {

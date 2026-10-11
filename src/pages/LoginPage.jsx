@@ -224,15 +224,6 @@ export default function LoginPage({ onNavigate }) {
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Games</span>
         </button>
-
-        <button
-          onClick={() => onNavigate('admin-login')}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#ED4163]/10 hover:bg-[#ED4163]/20 text-[#ED4163] rounded-xl border border-[#ED4163]/30 transition-all text-xs font-bold"
-          title="Admin Access"
-        >
-          <ShieldCheck className="w-3.5 h-3.5" />
-          <span>Staff Admin</span>
-        </button>
       </div>
 
       {/* Main Login Card */}

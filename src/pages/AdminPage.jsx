@@ -125,9 +125,17 @@ export default function AdminPage({ onNavigate }) {
     return u.id.includes(search) || (u.email && u.email.includes(search));
   });
 
-  // If not admin, show access denied
-  // NOTE: For demonstration, we allow viewing if they bypass the UI, but in production Firestore Security Rules should block read access to non-admins.
-  
+  // Strictly restrict admin page: only registered admins can view
+  useEffect(() => {
+    if (!isAdmin) {
+      onNavigate('home');
+    }
+  }, [isAdmin, onNavigate]);
+
+  if (!isAdmin) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col h-full bg-[#0F212E] text-white p-4 sm:p-8 w-full max-w-7xl mx-auto">
       
@@ -145,20 +153,7 @@ export default function AdminPage({ onNavigate }) {
         </button>
       </div>
 
-      {!isAdmin && (
-        <div className="bg-[#ED4163]/10 border border-[#ED4163]/20 rounded-2xl p-6 text-center">
-          <ShieldAlert className="w-12 h-12 text-[#ED4163] mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">Access Restricted</h2>
-          <p className="text-[#B1BAD3] mb-4">
-            You are currently logged in as: <strong className="text-white bg-black/20 px-2 py-1 rounded">{user?.email || 'Unknown User'}</strong>
-          </p>
-          <p className="text-[#B1BAD3] mb-6">You do not have administrative privileges to view this page.</p>
-          <p className="text-xs text-[#557086]">In a production environment, Firebase Security Rules would block this request.</p>
-        </div>
-      )}
-
-      {isAdmin && (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           
           {/* Sidebar Stats / Filters */}
           <div className="lg:col-span-1 space-y-6">

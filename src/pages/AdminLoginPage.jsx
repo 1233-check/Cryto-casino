@@ -24,7 +24,7 @@ export default function AdminLoginPage({ onNavigate }) {
       if (isUserAdmin(loggedUser)) {
         onNavigate('admin');
       } else {
-        setError('This account does not have administrative privileges. Authorized admins: ' + ADMIN_EMAILS.slice(0, 2).join(', '));
+        setError('This account does not have administrative privileges.');
       }
     } catch (err) {
       console.error(err);
@@ -42,7 +42,7 @@ export default function AdminLoginPage({ onNavigate }) {
       if (loggedUser && isUserAdmin(loggedUser)) {
         onNavigate('admin');
       } else if (loggedUser) {
-        setError(`Signed in as ${loggedUser.email}, but this account is not in the authorized admin list.`);
+        setError('This account does not have administrative privileges.');
       }
     } catch (err) {
       console.error('Google Admin Login error:', err);
@@ -50,11 +50,6 @@ export default function AdminLoginPage({ onNavigate }) {
     } finally {
       setGoogleLoading(false);
     }
-  };
-
-  const handleQuickAdminEntry = (targetEmail) => {
-    setEmail(targetEmail);
-    setPassword('admin123');
   };
 
   return (
@@ -168,32 +163,6 @@ export default function AdminLoginPage({ onNavigate }) {
             {!loading && <ArrowRight className="w-4 h-4" />}
           </button>
         </form>
-
-        {/* Authorized Accounts Notice */}
-        <div className="mt-6 p-3 bg-white/[0.03] border border-white/5 rounded-xl">
-          <div className="text-[11px] font-bold text-[#557086] uppercase mb-2 flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#00E701]" />
-            Authorized Platform Administrators:
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <button
-              type="button"
-              onClick={() => handleQuickAdminEntry('tejugiri549@gmail.com')}
-              className="text-left text-xs text-[#B1BAD3] hover:text-[#00E701] font-mono transition-colors flex items-center justify-between"
-            >
-              <span>tejugiri549@gmail.com</span>
-              <span className="text-[10px] text-[#00E701] bg-[#00E701]/10 px-1.5 py-0.5 rounded">Select &rarr;</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickAdminEntry('giribiju456@gmail.com')}
-              className="text-left text-xs text-[#B1BAD3] hover:text-[#00E701] font-mono transition-colors flex items-center justify-between"
-            >
-              <span>giribiju456@gmail.com</span>
-              <span className="text-[10px] text-[#00E701] bg-[#00E701]/10 px-1.5 py-0.5 rounded">Select &rarr;</span>
-            </button>
-          </div>
-        </div>
 
         <div className="mt-6 text-center">
           <button 
