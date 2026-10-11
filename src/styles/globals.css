@@ -7,6 +7,7 @@
     @apply m-0 p-0 font-sans;
     background-color: #0F212E;
     color: #FFFFFF;
+    overflow-x: hidden;
   }
 }
 
@@ -14,13 +15,36 @@
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+  
+  .glass-card {
+    background: rgba(26, 44, 56, 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glow-green {
+    box-shadow: 0 0 25px rgba(0, 231, 1, 0.35);
+  }
+
+  .glow-blue {
+    box-shadow: 0 0 25px rgba(20, 117, 225, 0.35);
+  }
+
+  .glow-red {
+    box-shadow: 0 0 25px rgba(237, 65, 99, 0.35);
+  }
 }
 
 /* Custom Scrollbar */
-::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #0F212E; }
-::-webkit-scrollbar-thumb { background: #213743; border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: #213743; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #2F4553; }
+
+.custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #213743; border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #2F4553; }
 
 /* Remove number input spinners */
 input[type="number"]::-webkit-inner-spin-button,
@@ -29,3 +53,9 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 input[type="number"] { -moz-appearance: textfield; }
+
+/* Smooth selection */
+::selection {
+  background: #00E701;
+  color: #000000;
+}

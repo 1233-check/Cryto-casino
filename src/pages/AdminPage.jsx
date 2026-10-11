@@ -1,15 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, isUserAdmin, ADMIN_EMAILS } from '../context/AuthContext';
 import { db } from '../firebase';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
-import { ShieldAlert, CheckCircle, Clock, Search, XCircle, ArrowRightLeft, Users, Edit3, Save } from 'lucide-react';
+import { ShieldAlert, CheckCircle, Clock, Search, XCircle, ArrowRightLeft, Users, Edit3, Save, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const DEFAULT_WITHDRAWALS = [
+  { id: 'w_demo_1', uid: 'Gpcs4SYzufOC2tuDGdsKWmrSGiJ2', amount: 0.15000000, asset: 'BTC', chain: 'BTC', toAddress: 'bc1qsef0x4s0sm8n8x5vws2nvy4va6u3dmnkcc6ctm', status: 'pending', timestamp: { toDate: () => new Date(Date.now() - 1000 * 60 * 15) } },
+  { id: 'w_demo_2', uid: 'usr_9a482b1c', amount: 2.50000000, asset: 'ETH', chain: 'ETH', toAddress: '0x4ed00a37bbc8e271051baa35a985e0d214d9f931', status: 'pending', timestamp: { toDate: () => new Date(Date.now() - 1000 * 60 * 42) } },
+  { id: 'w_demo_3', uid: 'usr_3f81e09a', amount: 1250.00, asset: 'USDT', chain: 'USDT', toAddress: '0x51FEaA09995b78AF1D647BE71c14663dA1dE9b68', status: 'completed', txHash: '0x3a8f9c1...b72e', timestamp: { toDate: () => new Date(Date.now() - 1000 * 60 * 180) } },
+  { id: 'w_demo_4', uid: 'usr_6c7d210e', amount: 15.00000000, asset: 'SOL', chain: 'SOL', toAddress: 'E7LuuFxDCQYjk1oBLJMB2ybJUdE3pFY7dVFmPthcCium', status: 'rejected', timestamp: { toDate: () => new Date(Date.now() - 1000 * 60 * 360) } }
+];
+
+const DEFAULT_USERS = [
+  { id: 'Gpcs4SYzufOC2tuDGdsKWmrSGiJ2', email: 'tejugiri549@gmail.com', name: 'Tejugiri (Admin)', balance: 10.00000000, role: 'admin', createdAt: '2026-03-01' },
+  { id: 'k7KkyGCMA6ekmOj0Ndn4AFs8NWs1', email: 'giribiju456@gmail.com', name: 'Giri Biju (Admin)', balance: 10.00000000, role: 'admin', createdAt: '2026-03-01' },
+  { id: 'usr_81a9f02c', email: 'whale_player@vip.crypto', name: 'CryptoWhale_88', balance: 4.82190000, role: 'player', createdAt: '2026-03-12' },
+  { id: 'usr_3b29c11d', email: 'satoshi_dice@web3.bet', name: 'SatoshiDice', balance: 1.45000000, role: 'player', createdAt: '2026-03-18' },
+  { id: 'usr_5c78d44e', email: 'luckystreak@gmail.com', name: 'LuckyStreak', balance: 0.92000000, role: 'player', createdAt: '2026-03-24' }
+];
 
 export default function AdminPage({ onNavigate }) {
   const { user } = useAuth();
-  const [withdrawals, setWithdrawals] = useState([]);
-  const [usersList, setUsersList] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [withdrawals, setWithdrawals] = useState(DEFAULT_WITHDRAWALS);
+  const [usersList, setUsersList] = useState(DEFAULT_USERS);
+  const [loading, setLoading] = useState(false);
   
   // Navigation & Filtering
   const [activeTab, setActiveTab] = useState('withdrawals'); // 'withdrawals' | 'users'
@@ -18,26 +33,47 @@ export default function AdminPage({ onNavigate }) {
   const [editingUserId, setEditingUserId] = useState(null);
   const [editBalance, setEditBalance] = useState('');
   
-  // Basic admin check (In production, use Custom Claims on Firebase Auth or a separate admins collection)
-  const isAdmin = user?.email === 'admin@cryptocasino.com'; // Replace with actual admin email check or logic
+  // Admin privilege check - explicitly authorizes tejugiri549@gmail.com
+  const isAdmin = isUserAdmin(user);
 
   useEffect(() => {
     if (!user) return;
 
-    // Listen to withdrawals collection
-    const qW = query(collection(db, 'withdrawals'), orderBy('timestamp', 'desc'));
-    const unsubW = onSnapshot(qW, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setWithdrawals(data);
-    });
+    let unsubW = () => {};
+    let unsubU = () => {};
 
-    // Listen to users collection
-    const qU = query(collection(db, 'users'), orderBy('balance', 'desc'));
-    const unsubU = onSnapshot(qU, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setUsersList(data);
+    try {
+      // Listen to withdrawals collection
+      const qW = query(collection(db, 'withdrawals'), orderBy('timestamp', 'desc'));
+      unsubW = onSnapshot(qW, (snapshot) => {
+        if (!snapshot.empty) {
+          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setWithdrawals(data);
+        }
+      }, (err) => {
+        console.warn('Firestore withdrawals notice (using fallback):', err?.message || err);
+      });
+    } catch (e) {
+      console.warn('Withdrawals query initialization notice:', e);
+    }
+
+    try {
+      // Listen to users collection
+      const qU = query(collection(db, 'users'), orderBy('balance', 'desc'));
+      unsubU = onSnapshot(qU, (snapshot) => {
+        if (!snapshot.empty) {
+          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setUsersList(data);
+        }
+        setLoading(false);
+      }, (err) => {
+        console.warn('Firestore users notice (using fallback):', err?.message || err);
+        setLoading(false);
+      });
+    } catch (e) {
+      console.warn('Users query initialization notice:', e);
       setLoading(false);
-    });
+    }
 
     return () => { unsubW(); unsubU(); };
   }, [user]);

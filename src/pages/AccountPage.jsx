@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, isUserAdmin } from '../context/AuthContext';
 import { getBalance } from '../utils/balance';
 import { motion } from 'framer-motion';
 import { 
@@ -15,11 +15,13 @@ import {
   Mail, 
   Sparkles,
   ExternalLink,
-  Lock
+  Lock,
+  ShieldAlert
 } from 'lucide-react';
 
 export default function AccountPage({ onNavigate }) {
   const { user, logout } = useAuth();
+  const isAdmin = isUserAdmin(user);
   const [balance, setBalance] = useState(getBalance());
   const [copied, setCopied] = useState(false);
 
@@ -117,6 +119,15 @@ export default function AccountPage({ onNavigate }) {
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto">
+            {isAdmin && (
+              <button
+                onClick={() => onNavigate('admin')}
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-[#ED4163]/20 hover:bg-[#ED4163]/30 text-[#ED4163] border border-[#ED4163]/40 font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(237,65,99,0.3)] hover:-translate-y-0.5 text-sm"
+              >
+                <ShieldAlert className="w-4 h-4" />
+                <span>Admin Portal</span>
+              </button>
+            )}
             <button
               onClick={() => onNavigate('home')}
               className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-5 py-3 bg-[#00E701] hover:bg-[#00E701]/90 text-black font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(0,231,1,0.3)] hover:-translate-y-0.5 text-sm"

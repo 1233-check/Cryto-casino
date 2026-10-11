@@ -1,20 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, ADMIN_EMAILS } from '../context/AuthContext';
 import { useWallet } from '../context/WalletContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   AlertCircle, 
   ArrowLeft, 
   CheckCircle2, 
   Wallet, 
   Sparkles, 
-  ExternalLink,
   ShieldCheck,
-  Zap
+  Zap,
+  Mail,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  Flame,
+  KeyRound,
+  ArrowRight
 } from 'lucide-react';
 
 export default function LoginPage({ onNavigate }) {
-  const { loginWithGoogle, loginWithWallet, user } = useAuth();
+  const { 
+    loginWithGoogle, 
+    loginWithEmail, 
+    signupWithEmail, 
+    loginAsGuest, 
+    loginWithWallet, 
+    user 
+  } = useAuth();
+
   const { 
     connectMetaMask, 
     connectPhantom, 
@@ -24,12 +39,34 @@ export default function LoginPage({ onNavigate }) {
     isConnecting 
   } = useWallet();
 
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [activeMethod, setActiveMethod] = useState(null); // 'google' | 'metamask' | 'phantom' | 'trust' | 'browser' | 'demo'
-  const [error, setError] = useState(null);
-  const [detectedWallets, setDetectedWallets] = useState({ metamask: false, phantom: false, trust: false, browser: false });
+  // Active Login Mode Tab: 'instant' | 'email' | 'google' | 'wallet'
+  const [activeTab, setActiveTab] = useState('instant');
+  const [authMode, setAuthMode] = useState('signin'); // 'signin' | 'signup'
 
-  // Detect which wallet extensions exist in the user's browser
+  // Email form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Guest name state
+  const [guestName, setGuestName] = useState('');
+
+  // Status & loading
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [activeMethod, setActiveMethod] = useState(null);
+  const [error, setError] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
+  const [domainWarning, setDomainWarning] = useState(false);
+
+  const [detectedWallets, setDetectedWallets] = useState({ 
+    metamask: false, 
+    phantom: false, 
+    trust: false, 
+    browser: false 
+  });
+
+  // Detect wallet extensions
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hasMetaMask = Boolean(window.ethereum?.isMetaMask && !window.ethereum?.isTrust);
@@ -42,28 +79,88 @@ export default function LoginPage({ onNavigate }) {
 
   useEffect(() => {
     if (user) {
-      onNavigate('account');
+      const timer = setTimeout(() => {
+        onNavigate('home');
+      }, 500);
+      return () => clearTimeout(timer);
     }
   }, [user, onNavigate]);
 
-  const handleGoogleLogin = async () => {
+  // 1-Click Instant Guest Login
+  const handleInstantGuestLogin = () => {
     setError(null);
     setIsLoggingIn(true);
+    setActiveMethod('instant');
+    try {
+      const guest = loginAsGuest(guestName);
+      setSuccessMsg(`Welcome, ${guest.name}! Loading casino...`);
+      setTimeout(() => onNavigate('home'), 400);
+    } catch (err) {
+      setError(err.message || 'Failed to initialize instant guest session.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  // Email Login / Signup
+  const handleEmailAuth = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setIsLoggingIn(true);
+    setActiveMethod('email');
+
+    try {
+      if (authMode === 'signup') {
+        if (password.length < 6) {
+          throw new Error('Password must be at least 6 characters.');
+        }
+        await signupWithEmail(email, password, displayName);
+        setSuccessMsg('Account created successfully! Entering casino...');
+      } else {
+        await loginWithEmail(email, password);
+        setSuccessMsg('Signed in successfully! Entering casino...');
+      }
+      setTimeout(() => onNavigate('home'), 400);
+    } catch (err) {
+      console.error('Email auth error:', err);
+      let msg = err.message || 'Failed to authenticate.';
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+        msg = 'Incorrect email or password. Please verify your credentials.';
+      } else if (err.code === 'auth/user-not-found') {
+        msg = 'No account found with this email. Switch to "Sign Up" to create one.';
+      } else if (err.code === 'auth/email-already-in-use') {
+        msg = 'An account with this email already exists. Switch to "Sign In".';
+      }
+      setError(msg);
+    } finally {
+      setIsLoggingIn(false);
+      setActiveMethod(null);
+    }
+  };
+
+  // Google Login
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setDomainWarning(false);
+    setIsLoggingIn(true);
     setActiveMethod('google');
+
     try {
       const loggedInUser = await loginWithGoogle();
       if (loggedInUser) {
-        onNavigate('account');
+        setSuccessMsg(`Welcome, ${loggedInUser.name || loggedInUser.email}!`);
+        setTimeout(() => onNavigate('home'), 400);
       }
     } catch (err) {
       console.error('Google login error:', err);
-      let message = 'Unable to sign in. Please try again.';
+      let message = 'Unable to sign in with Google. Please try another method or play as guest.';
       if (err.code === 'auth/unauthorized-domain') {
-        message = 'Domain not authorized: Please ensure "cryto-casino.vercel.app" is added in Firebase Console > Authentication > Settings > Authorized domains.';
+        setDomainWarning(true);
+        message = 'This hosting domain is not yet on Firebase authorized list. Use Instant 1-Click Guest or Email Login below to enter immediately!';
       } else if (err.code === 'auth/popup-closed-by-user') {
-        message = 'Sign in popup was closed. Click Continue with Google to try again.';
+        message = 'Google sign-in popup was closed. Click again or use Instant Guest Play.';
       } else if (err.code === 'auth/cancelled-popup-request') {
-        message = 'Sign in request cancelled. Please try again.';
+        message = 'Sign in request cancelled.';
       } else if (err.message) {
         message = err.message;
       }
@@ -74,6 +171,7 @@ export default function LoginPage({ onNavigate }) {
     }
   };
 
+  // Web3 Wallet Login
   const handleWalletLogin = async (type) => {
     setError(null);
     setIsLoggingIn(true);
@@ -94,16 +192,13 @@ export default function LoginPage({ onNavigate }) {
       }
 
       if (address) {
-        // Authenticate into Casino session as a Web3 player
-        if (loginWithWallet) {
-          await loginWithWallet(address, type);
-        }
-        onNavigate('account');
+        await loginWithWallet(address, type);
+        setSuccessMsg('Wallet connected! Entering casino...');
+        setTimeout(() => onNavigate('home'), 400);
       }
     } catch (err) {
       console.error(`${type} login failed:`, err);
-      let msg = err.message || 'Wallet connection was rejected or cancelled.';
-      setError(msg);
+      setError(err.message || 'Wallet connection was cancelled or not installed.');
     } finally {
       setIsLoggingIn(false);
       setActiveMethod(null);
@@ -113,116 +208,321 @@ export default function LoginPage({ onNavigate }) {
   const isDisabled = isLoggingIn || isConnecting;
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-[#0F212E] via-[#0a1a27] to-[#1A2C38] relative overflow-hidden p-4">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#07131D] via-[#0F212E] to-[#162734] relative overflow-x-hidden p-4 sm:p-6">
       
-      {/* Back to Home Button */}
-      <button
-        onClick={() => onNavigate('home')}
-        className="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-[#B1BAD3] hover:text-white rounded-xl border border-white/10 transition-colors text-sm font-medium"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Casino
-      </button>
+      {/* Dynamic ambient lights */}
+      <div className="absolute top-[-10%] left-[-10%] w-[55%] h-[55%] bg-[#00E701] rounded-full blur-[200px] opacity-[0.06] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[55%] h-[55%] bg-[#1475E1] rounded-full blur-[200px] opacity-[0.08] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40%] h-[40%] bg-[#FFD700] rounded-full blur-[240px] opacity-[0.03] pointer-events-none" />
 
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{ x: [0, 30, 0], y: [0, -20, 0], scale: [1, 1.1, 1] }}
-          transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
-          className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#1475E1] rounded-full blur-[180px] opacity-[0.08]"
-        />
-        <motion.div
-          animate={{ x: [0, -20, 0], y: [0, 30, 0], scale: [1, 1.15, 1] }}
-          transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
-          className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#00E701] rounded-full blur-[180px] opacity-[0.08]"
-        />
+      {/* Top Navigation Bar */}
+      <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-20">
+        <button
+          onClick={() => onNavigate('home')}
+          className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-[#B1BAD3] hover:text-white rounded-xl border border-white/10 transition-all text-xs sm:text-sm font-semibold backdrop-blur-md"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Games</span>
+        </button>
+
+        <button
+          onClick={() => onNavigate('admin-login')}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#ED4163]/10 hover:bg-[#ED4163]/20 text-[#ED4163] rounded-xl border border-[#ED4163]/30 transition-all text-xs font-bold"
+          title="Admin Access"
+        >
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>Staff Admin</span>
+        </button>
       </div>
 
+      {/* Main Login Card */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative z-10 w-full max-w-lg p-6 sm:p-8 bg-[#0F212E]/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl flex flex-col items-center max-h-[95vh] overflow-y-auto custom-scrollbar"
+        initial={{ opacity: 0, scale: 0.96, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="relative z-10 w-full max-w-lg bg-[#0F212E]/95 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] p-6 sm:p-8 mt-12 mb-6"
       >
-        
-        {/* Logo */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className="bg-gradient-to-tr from-[#1475E1] to-[#00E701] p-2.5 rounded-xl shadow-[0_0_25px_rgba(20,117,225,0.4)]">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="4" />
-              <circle cx="8.5" cy="8.5" r="1.5" fill="white" />
-              <circle cx="15.5" cy="15.5" r="1.5" fill="white" />
-              <circle cx="15.5" cy="8.5" r="1.5" fill="white" />
-              <circle cx="8.5" cy="15.5" r="1.5" fill="white" />
-            </svg>
+        {/* Brand Header */}
+        <div className="flex flex-col items-center text-center mb-6">
+          <div className="flex items-center gap-2.5 mb-2">
+            <div className="bg-gradient-to-tr from-[#1475E1] to-[#00E701] p-2.5 rounded-2xl shadow-[0_0_25px_rgba(0,231,1,0.35)]">
+              <Sparkles className="w-6 h-6 text-black" />
+            </div>
+            <span className="text-2xl sm:text-3xl font-black font-display tracking-tight text-white">
+              CRYPTO<span className="text-[#00E701]">BET</span>
+            </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black font-display tracking-tight text-white">
-            Crypto<span className="text-[#00E701]">Casino</span>
-          </h1>
+          <p className="text-xs sm:text-sm text-[#B1BAD3]">
+            Provably Fair Crypto Casino • Instant Access & Payouts
+          </p>
         </div>
 
-        {user ? (
-          <div className="w-full flex flex-col items-center text-center py-4">
-            <div className="w-16 h-16 rounded-full border-2 border-[#00E701] overflow-hidden mb-3">
-              <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+        {/* Success Alert */}
+        {successMsg && (
+          <motion.div 
+            initial={{ opacity: 0, y: -5 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            className="w-full mb-4 p-3 rounded-xl bg-[#00E701]/15 border border-[#00E701]/30 text-[#00E701] text-xs font-semibold flex items-center gap-2"
+          >
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{successMsg}</span>
+          </motion.div>
+        )}
+
+        {/* Error Alert */}
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, y: -5 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            className="w-full mb-4 p-3.5 rounded-xl bg-[#ED4163]/15 border border-[#ED4163]/30 text-[#ED4163] text-xs flex items-start gap-2.5 leading-relaxed"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <span>{error}</span>
+              {domainWarning && (
+                <button
+                  onClick={handleInstantGuestLogin}
+                  className="block mt-2 font-bold text-[#00E701] hover:underline"
+                >
+                  ⚡ Click here to start playing immediately as Instant Guest (no config needed) &rarr;
+                </button>
+              )}
             </div>
-            <h2 className="text-xl font-bold text-white mb-1">Signed in as {user.name}</h2>
-            <p className="text-xs text-[#00E701] mb-6 flex items-center gap-1 font-bold">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Account Connected (UID: {user.id?.substring(0, 8)}...)
-            </p>
-            <div className="w-full space-y-3">
-              <button
-                onClick={() => onNavigate('account')}
-                className="w-full py-3.5 bg-[#00E701] text-black font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(0,231,1,0.3)] hover:-translate-y-0.5 text-sm"
-              >
-                Go to My Account
-              </button>
-              <button
-                onClick={() => onNavigate('home')}
-                className="w-full py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/15 transition-all text-sm"
-              >
-                Continue to Casino Home
-              </button>
+          </motion.div>
+        )}
+
+        {/* Navigation Tabs for Auth Modes */}
+        <div className="grid grid-cols-4 gap-1 p-1 bg-[#07131D] rounded-2xl border border-white/5 mb-6 text-xs font-bold">
+          <button
+            onClick={() => { setActiveTab('instant'); setError(null); }}
+            className={`py-2.5 px-1 rounded-xl transition-all flex flex-col sm:flex-row items-center justify-center gap-1.5 ${
+              activeTab === 'instant'
+                ? 'bg-[#00E701] text-black shadow-[0_0_15px_rgba(0,231,1,0.3)]'
+                : 'text-[#B1BAD3] hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 shrink-0" />
+            <span className="text-[11px] sm:text-xs">Instant</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('email'); setError(null); }}
+            className={`py-2.5 px-1 rounded-xl transition-all flex flex-col sm:flex-row items-center justify-center gap-1.5 ${
+              activeTab === 'email'
+                ? 'bg-[#1475E1] text-white shadow-[0_0_15px_rgba(20,117,225,0.3)]'
+                : 'text-[#B1BAD3] hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Mail className="w-3.5 h-3.5 shrink-0" />
+            <span className="text-[11px] sm:text-xs">Email</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('google'); setError(null); }}
+            className={`py-2.5 px-1 rounded-xl transition-all flex flex-col sm:flex-row items-center justify-center gap-1.5 ${
+              activeTab === 'google'
+                ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)]'
+                : 'text-[#B1BAD3] hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            <span className="text-[11px] sm:text-xs">Google</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('wallet'); setError(null); }}
+            className={`py-2.5 px-1 rounded-xl transition-all flex flex-col sm:flex-row items-center justify-center gap-1.5 ${
+              activeTab === 'wallet'
+                ? 'bg-[#AB9FF2] text-black shadow-[0_0_15px_rgba(171,159,242,0.3)]'
+                : 'text-[#B1BAD3] hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Wallet className="w-3.5 h-3.5 shrink-0" />
+            <span className="text-[11px] sm:text-xs">Web3</span>
+          </button>
+        </div>
+
+        {/* TAB 1: 1-CLICK INSTANT GUEST ACCESS */}
+        {activeTab === 'instant' && (
+          <div className="space-y-4">
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-[#00E701]/10 to-[#1475E1]/10 border border-[#00E701]/20 text-center">
+              <div className="flex items-center justify-center gap-2 text-[#00E701] font-bold text-sm mb-1">
+                <Flame className="w-4 h-4 text-[#FFD700]" />
+                <span>Zero Friction • Instant Play</span>
+              </div>
+              <p className="text-xs text-[#B1BAD3]">
+                Jump straight into the games with a generated anonymous account and <strong>1.00000000 BTC</strong> play balance.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#557086] uppercase tracking-wider mb-2">
+                Nickname / Handle (Optional)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  placeholder="e.g. Satoshi_VIP, HighRoller"
+                  className="w-full bg-[#07131D] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-[#00E701] transition-colors"
+                />
+                <User className="w-4 h-4 text-[#557086] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              </div>
+            </div>
+
+            <button
+              onClick={handleInstantGuestLogin}
+              disabled={isDisabled}
+              className="w-full py-4 bg-gradient-to-r from-[#00E701] to-[#00C853] hover:brightness-110 text-black font-extrabold text-sm rounded-xl transition-all shadow-[0_0_25px_rgba(0,231,1,0.35)] hover:-translate-y-0.5 flex items-center justify-center gap-2"
+            >
+              <Zap className="w-4 h-4 fill-black" />
+              <span>Play Instantly as Guest</span>
+            </button>
+
+            <div className="text-center">
+              <span className="text-[11px] text-[#557086]">
+                You can link an email or Web3 wallet at any time in your account settings.
+              </span>
             </div>
           </div>
-        ) : (
-          <>
-            <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 text-center">Sign In or Connect Wallet</h2>
-            <p className="text-[#B1BAD3] text-center mb-5 text-xs sm:text-sm">Instant anonymous login with Web3 or Google</p>
+        )}
 
-            {error && (
-              <motion.div 
-                initial={{ opacity: 0, y: -5 }} 
-                animate={{ opacity: 1, y: 0 }} 
-                className="w-full mb-4 p-3.5 rounded-xl bg-[#ED4163]/15 border border-[#ED4163]/30 text-[#ED4163] text-xs flex items-start gap-2.5"
+        {/* TAB 2: EMAIL & PASSWORD (SIGN IN / REGISTER) */}
+        {activeTab === 'email' && (
+          <div>
+            {/* Mode Switcher */}
+            <div className="flex border-b border-white/10 mb-5">
+              <button
+                type="button"
+                onClick={() => { setAuthMode('signin'); setError(null); }}
+                className={`flex-1 pb-2.5 text-xs font-bold text-center border-b-2 transition-all ${
+                  authMode === 'signin'
+                    ? 'border-[#1475E1] text-white'
+                    : 'border-transparent text-[#557086] hover:text-[#B1BAD3]'
+                }`}
               >
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <div className="flex-1 leading-relaxed">
-                  {error}
-                  {error.includes('not installed') && (
-                    <button
-                      onClick={() => handleWalletLogin('demo')}
-                      className="block mt-2 font-bold text-[#00E701] hover:underline"
-                    >
-                      💡 Or click here to connect Instant Demo Web3 Wallet (no extension required)
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            )}
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAuthMode('signup'); setError(null); }}
+                className={`flex-1 pb-2.5 text-xs font-bold text-center border-b-2 transition-all ${
+                  authMode === 'signup'
+                    ? 'border-[#00E701] text-white'
+                    : 'border-transparent text-[#557086] hover:text-[#B1BAD3]'
+                }`}
+              >
+                Create New Account
+              </button>
+            </div>
 
-            {/* Google OAuth Button */}
+            <form onSubmit={handleEmailAuth} className="space-y-3.5">
+              {authMode === 'signup' && (
+                <div>
+                  <label className="block text-xs font-bold text-[#557086] uppercase tracking-wider mb-1.5">
+                    Username / Player Name
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="CryptoChamp"
+                      className="w-full bg-[#07131D] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#1475E1]"
+                    />
+                    <User className="w-4 h-4 text-[#557086] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-[#557086] uppercase tracking-wider mb-1.5">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="player@example.com"
+                    className="w-full bg-[#07131D] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#1475E1]"
+                  />
+                  <Mail className="w-4 h-4 text-[#557086] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#557086] uppercase tracking-wider mb-1.5">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-[#07131D] border border-white/10 rounded-xl pl-10 pr-10 py-2.5 text-white text-sm focus:outline-none focus:border-[#1475E1]"
+                  />
+                  <Lock className="w-4 h-4 text-[#557086] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#557086] hover:text-white"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isDisabled}
+                className={`w-full mt-4 py-3.5 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg hover:-translate-y-0.5 disabled:opacity-50 ${
+                  authMode === 'signup'
+                    ? 'bg-[#00E701] hover:bg-[#00E701]/90 text-black shadow-[0_0_20px_rgba(0,231,1,0.3)]'
+                    : 'bg-[#1475E1] hover:bg-[#1475E1]/90 text-white shadow-[0_0_20px_rgba(20,117,225,0.3)]'
+                }`}
+              >
+                {isLoggingIn && activeMethod === 'email' ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span>{authMode === 'signup' ? 'Create Casino Account' : 'Sign In with Email'}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* TAB 3: GOOGLE ONE-TAP */}
+        {activeTab === 'google' && (
+          <div className="space-y-4">
+            <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 text-center">
+              <p className="text-xs text-[#B1BAD3] leading-relaxed">
+                Connect seamlessly with your Google Account. Your profile will be automatically synced with your personal vault.
+              </p>
+            </div>
+
             <button 
               onClick={handleGoogleLogin}
               disabled={isDisabled}
-              className="w-full relative group overflow-hidden bg-white text-black font-bold text-sm py-3.5 px-6 rounded-xl transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 mb-5"
+              className="w-full relative group overflow-hidden bg-white text-black font-bold text-sm py-3.5 px-6 rounded-xl transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <div className="flex items-center justify-center gap-3">
-                {activeMethod === 'google' ? (
-                  <div className="w-5 h-5 border-2 border-gray-200 border-t-black rounded-full animate-spin" />
+                {isLoggingIn && activeMethod === 'google' ? (
+                  <div className="w-5 h-5 border-2 border-gray-300 border-t-black rounded-full animate-spin" />
                 ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
@@ -233,125 +533,106 @@ export default function LoginPage({ onNavigate }) {
               </div>
             </button>
 
-            {/* Divider */}
-            <div className="w-full flex items-center gap-4 mb-5">
-              <div className="flex-1 h-px bg-white/10" />
-              <span className="text-xs text-[#557086] font-bold uppercase tracking-wider">or connect web3 wallet</span>
-              <div className="flex-1 h-px bg-white/10" />
+            {/* Quick backup fallback in case popup blocked */}
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-[11px] text-[#557086] text-center">
+              Having trouble with popups in your mobile browser? Try <strong>Instant Guest</strong> or <strong>Email Login</strong> tabs above.
             </div>
+          </div>
+        )}
 
-            {/* Web3 Wallet Options Grid */}
-            <div className="w-full space-y-2.5 mb-4">
-              
-              {/* MetaMask */}
-              <button
-                onClick={() => handleWalletLogin('metamask')}
-                disabled={isDisabled}
-                className="w-full relative group bg-gradient-to-r from-[#F6851B]/10 to-[#E2761B]/10 border border-[#F6851B]/30 hover:border-[#F6851B] text-white font-bold text-sm py-3 px-4 rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(246,133,27,0.2)] disabled:opacity-50 text-left flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  {activeMethod === 'metamask' ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-[#F6851B] rounded-full animate-spin" />
-                  ) : (
-                    <span className="text-xl">🦊</span>
-                  )}
-                  <div>
-                    <div className="font-bold text-sm text-white flex items-center gap-2">
-                      MetaMask
-                      {detectedWallets.metamask && (
-                        <span className="text-[10px] bg-[#00E701]/20 text-[#00E701] px-1.5 py-0.2 rounded font-semibold">Detected</span>
-                      )}
-                    </div>
-                    <span className="text-[11px] text-[#B1BAD3]">Ethereum, BNB, USDT</span>
+        {/* TAB 4: WEB3 WALLETS */}
+        {activeTab === 'wallet' && (
+          <div className="space-y-2.5">
+            {/* MetaMask */}
+            <button
+              onClick={() => handleWalletLogin('metamask')}
+              disabled={isDisabled}
+              className="w-full bg-[#F6851B]/10 hover:bg-[#F6851B]/20 border border-[#F6851B]/30 hover:border-[#F6851B] text-white font-bold text-sm py-3 px-4 rounded-xl transition-all flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🦊</span>
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <span>MetaMask</span>
+                    {detectedWallets.metamask && (
+                      <span className="text-[10px] bg-[#00E701]/20 text-[#00E701] px-1.5 py-0.2 rounded font-semibold">Detected</span>
+                    )}
                   </div>
+                  <span className="text-[11px] text-[#B1BAD3]">Ethereum, BNB, Polygon</span>
                 </div>
-                <span className="text-xs text-[#557086] group-hover:text-white transition-colors">EVM &rarr;</span>
-              </button>
+              </div>
+              <span className="text-xs text-[#557086]">Connect &rarr;</span>
+            </button>
 
-              {/* Phantom */}
-              <button
-                onClick={() => handleWalletLogin('phantom')}
-                disabled={isDisabled}
-                className="w-full relative group bg-gradient-to-r from-[#AB9FF2]/10 to-[#7D6AE8]/10 border border-[#AB9FF2]/30 hover:border-[#AB9FF2] text-white font-bold text-sm py-3 px-4 rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(171,159,242,0.2)] disabled:opacity-50 text-left flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  {activeMethod === 'phantom' ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-[#AB9FF2] rounded-full animate-spin" />
-                  ) : (
-                    <span className="text-xl">👻</span>
-                  )}
-                  <div>
-                    <div className="font-bold text-sm text-white flex items-center gap-2">
-                      Phantom
-                      {detectedWallets.phantom && (
-                        <span className="text-[10px] bg-[#00E701]/20 text-[#00E701] px-1.5 py-0.2 rounded font-semibold">Detected</span>
-                      )}
-                    </div>
-                    <span className="text-[11px] text-[#B1BAD3]">Solana Network (SOL)</span>
+            {/* Phantom */}
+            <button
+              onClick={() => handleWalletLogin('phantom')}
+              disabled={isDisabled}
+              className="w-full bg-[#AB9FF2]/10 hover:bg-[#AB9FF2]/20 border border-[#AB9FF2]/30 hover:border-[#AB9FF2] text-white font-bold text-sm py-3 px-4 rounded-xl transition-all flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">👻</span>
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <span>Phantom</span>
+                    {detectedWallets.phantom && (
+                      <span className="text-[10px] bg-[#00E701]/20 text-[#00E701] px-1.5 py-0.2 rounded font-semibold">Detected</span>
+                    )}
                   </div>
+                  <span className="text-[11px] text-[#B1BAD3]">Solana Network (SOL)</span>
                 </div>
-                <span className="text-xs text-[#557086] group-hover:text-white transition-colors">SOL &rarr;</span>
-              </button>
+              </div>
+              <span className="text-xs text-[#557086]">Connect &rarr;</span>
+            </button>
 
-              {/* Trust Wallet */}
-              <button
-                onClick={() => handleWalletLogin('trust')}
-                disabled={isDisabled}
-                className="w-full relative group bg-gradient-to-r from-[#3375BB]/10 to-[#1B4F7A]/10 border border-[#3375BB]/30 hover:border-[#3375BB] text-white font-bold text-sm py-3 px-4 rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(51,117,187,0.2)] disabled:opacity-50 text-left flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  {activeMethod === 'trust' ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-[#3375BB] rounded-full animate-spin" />
-                  ) : (
-                    <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
-                      <path d="M24 4L6 12v12c0 11.1 7.7 21.5 18 24 10.3-2.5 18-12.9 18-24V12L24 4z" fill="#3375BB"/>
-                      <path d="M24 8l-14 6.2v9.7c0 9 6.3 17.5 14 19.6 7.7-2.1 14-10.6 14-19.6v-9.7L24 8z" fill="white"/>
-                    </svg>
-                  )}
-                  <div>
-                    <div className="font-bold text-sm text-white flex items-center gap-2">
-                      Trust Wallet
-                      {detectedWallets.trust && (
-                        <span className="text-[10px] bg-[#00E701]/20 text-[#00E701] px-1.5 py-0.2 rounded font-semibold">Detected</span>
-                      )}
-                    </div>
-                    <span className="text-[11px] text-[#B1BAD3]">Multi-Chain Mobile & Extension</span>
+            {/* Trust Wallet */}
+            <button
+              onClick={() => handleWalletLogin('trust')}
+              disabled={isDisabled}
+              className="w-full bg-[#3375BB]/10 hover:bg-[#3375BB]/20 border border-[#3375BB]/30 hover:border-[#3375BB] text-white font-bold text-sm py-3 px-4 rounded-xl transition-all flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🛡️</span>
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <span>Trust Wallet</span>
+                    {detectedWallets.trust && (
+                      <span className="text-[10px] bg-[#00E701]/20 text-[#00E701] px-1.5 py-0.2 rounded font-semibold">Detected</span>
+                    )}
                   </div>
+                  <span className="text-[11px] text-[#B1BAD3]">Multi-Chain Mobile & Extension</span>
                 </div>
-                <span className="text-xs text-[#557086] group-hover:text-white transition-colors">Multi &rarr;</span>
-              </button>
-
-              {/* Browser / Injected Web3 (Coinbase, Brave, Rabby, OKX) */}
-              <button
-                onClick={() => handleWalletLogin('browser')}
-                disabled={isDisabled}
-                className="w-full relative group bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-white/30 text-white font-medium text-sm py-2.5 px-4 rounded-xl transition-all flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <Wallet className="w-5 h-5 text-[#1475E1]" />
-                  <span className="text-xs text-[#B1BAD3]">Other Web3 Wallet (Coinbase / Brave / Rabby)</span>
-                </div>
-                <span className="text-xs text-[#557086] group-hover:text-white">&rarr;</span>
-              </button>
-            </div>
+              </div>
+              <span className="text-xs text-[#557086]">Connect &rarr;</span>
+            </button>
 
             {/* Instant Demo Web3 Wallet */}
-            <div className="w-full pt-2">
-              <button
-                onClick={() => handleWalletLogin('demo')}
-                disabled={isDisabled}
-                className="w-full py-2.5 px-3 bg-[#00E701]/10 hover:bg-[#00E701]/20 border border-[#00E701]/30 rounded-xl transition-all flex items-center justify-center gap-2 text-xs font-bold text-[#00E701]"
-              >
-                <Zap className="w-3.5 h-3.5" />
-                <span>Test Instantly with Demo Web3 Wallet (No extension required)</span>
-              </button>
-            </div>
-
-            <div className="mt-5 text-center text-xs text-[#B1BAD3]/60 max-w-xs">
-              By connecting, you agree to our Terms of Service. Non-custodial provably fair gambling platform.
-            </div>
-          </>
+            <button
+              onClick={() => handleWalletLogin('demo')}
+              disabled={isDisabled}
+              className="w-full py-3 px-4 bg-[#00E701]/10 hover:bg-[#00E701]/20 border border-[#00E701]/40 rounded-xl transition-all flex items-center justify-center gap-2 text-xs font-bold text-[#00E701]"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>Connect Instant Demo Web3 Wallet (No extension required)</span>
+            </button>
+          </div>
         )}
+
+        {/* Security & Provably Fair Guarantees */}
+        <div className="mt-6 pt-5 border-t border-white/5 flex items-center justify-around text-center text-[10px] text-[#557086] font-semibold">
+          <div className="flex items-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#00E701]" />
+            <span>100% Provably Fair</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <KeyRound className="w-3.5 h-3.5 text-[#1475E1]" />
+            <span>Non-Custodial</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Zap className="w-3.5 h-3.5 text-[#FFD700]" />
+            <span>Instant Cashouts</span>
+          </div>
+        </div>
       </motion.div>
     </div>
   );

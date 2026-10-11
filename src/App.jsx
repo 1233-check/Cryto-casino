@@ -57,9 +57,11 @@ function getInitialView() {
 
 function App() {
   const [activeView, setActiveViewState] = useState(getInitialView);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const setActiveView = (view) => {
     setActiveViewState(view);
+    setMobileSidebarOpen(false);
     if (typeof window !== 'undefined') {
       window.location.hash = view === 'home' ? '' : `#${view}`;
     }
@@ -134,9 +136,21 @@ function App() {
     <AuthProvider>
       <WalletProvider>
         <div className="flex h-screen bg-[#0F212E] text-white overflow-hidden font-sans">
-          {!isAuthView && <Sidebar activeView={activeView} setActiveView={setActiveView} />}
+          {!isAuthView && (
+            <Sidebar 
+              activeView={activeView} 
+              setActiveView={setActiveView} 
+              mobileOpen={mobileSidebarOpen}
+              onCloseMobile={() => setMobileSidebarOpen(false)}
+            />
+          )}
           <div className="flex-1 flex flex-col min-w-0">
-            {!isAuthView && <Navbar onNavigate={setActiveView} />}
+            {!isAuthView && (
+              <Navbar 
+                onNavigate={setActiveView} 
+                onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+              />
+            )}
             <main className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar relative">
               {renderContent()}
             </main>
