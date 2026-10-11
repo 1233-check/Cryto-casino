@@ -220,6 +220,11 @@ export const WalletProvider = ({ children }) => {
 
   // Send EVM transaction (ETH/USDT/USDC/BTC)
   const sendEvmTransaction = useCallback(async (toAddress, amountInEther, asset) => {
+    if (connectedWallet === 'demo') {
+      await new Promise(r => setTimeout(r, 600));
+      return '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+    }
+
     const provider = window.ethereum;
     if (!provider) throw new Error('No EVM wallet connected');
     
@@ -264,10 +269,15 @@ export const WalletProvider = ({ children }) => {
     });
 
     return txHash;
-  }, []);
+  }, [connectedWallet]);
 
   // Send Solana transaction
   const sendSolanaTransaction = useCallback(async (toAddress, amountInSol) => {
+    if (connectedWallet === 'demo') {
+      await new Promise(r => setTimeout(r, 600));
+      return Array.from({length: 88}, () => '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'[Math.floor(Math.random()*58)]).join('');
+    }
+
     if (!window.solana?.isPhantom) throw new Error('Phantom not connected');
 
     // Dynamic import to avoid bundling issues

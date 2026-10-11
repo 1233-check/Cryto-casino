@@ -1,5 +1,5 @@
 import { auth, db } from '../firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 export const CURRENCIES = {
   USDT: {
@@ -128,18 +128,26 @@ auth.onAuthStateChanged((user) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.balances && typeof data.balances === 'object') {
+            let changed = false;
             Object.keys(CURRENCIES).forEach(curr => {
               if (typeof data.balances[curr] === 'number') {
-                currentBalances[curr] = data.balances[curr];
+                if (currentBalances[curr] !== data.balances[curr]) {
+                  currentBalances[curr] = data.balances[curr];
+                  changed = true;
+                }
               }
             });
-            persistBalances();
-            dispatchBalanceUpdate();
-          } else if (typeof data.balance === 'number') {
-            currentBalances.BTC = data.balance;
-            persistBalances();
-            dispatchBalanceUpdate();
+            if (changed) {
+              persistBalances();
+              dispatchBalanceUpdate();
+            }
+          } else {
+            // First time login: seed default multi-balances into Firestore
+            setDoc(userRef, { balances: currentBalances }, { merge: true }).catch(() => {});
           }
+        } else {
+          // Initialize doc for new user
+          setDoc(userRef, { balances: currentBalances }, { merge: true }).catch(() => {});
         }
       }, (err) => {
         console.warn('Firestore balance listener notice:', err?.message || err);
@@ -202,6 +210,20 @@ export function setBalance(amount, cur = activeCurrency) {
   currentBalances[targetCur] = clamped;
   persistBalances();
   dispatchBalanceUpdate();
+
+  // Seamlessly sync to Firestore if authenticated
+  if (auth && auth.currentUser) {
+    try {
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      setDoc(userRef, { 
+        balances: { ...currentBalances },
+        lastUpdated: Date.now()
+      }, { merge: true }).catch((err) => {
+        console.warn('Firestore balance sync notice:', err?.message || err);
+      });
+    } catch {}
+  }
+
   return clamped;
 }
 

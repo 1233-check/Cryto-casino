@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useWallet, ASSETS, DEPOSIT_ADDRESSES } from '../context/WalletContext';
-import { getBalance, addToBalance, subtractFromBalance, getCurrencyConfig, CURRENCIES } from '../utils/balance';
+import { getBalance, addToBalance, subtractFromBalance, getCurrencyConfig, CURRENCIES, getActiveCurrency, setActiveCurrency } from '../utils/balance';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wallet, ArrowDownToLine, ArrowUpFromLine, Copy, Check, ExternalLink, Shield, AlertTriangle, ChevronDown, X, LinkIcon, Unlink, QrCode } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -47,7 +47,7 @@ const WALLET_OPTIONS = [
     id: 'demo',
     name: 'Demo Wallet',
     desc: 'Instant Web3 test wallet',
-    assets: ['ethereum', 'bnb', 'usdt'],
+    assets: ['ethereum', 'bnb', 'solana', 'usdt', 'btc'],
     color: '#00E701',
     gradient: 'from-[#00E701]/20 to-[#1475E1]/20',
     borderColor: 'border-[#00E701]',
@@ -63,6 +63,22 @@ const CHAIN_TO_CURRENCY = {
   btc: 'BTC'
 };
 
+const CURRENCY_TO_CHAIN = {
+  ETH: 'ethereum',
+  SOL: 'solana',
+  BNB: 'bnb',
+  USDT: 'usdt',
+  BTC: 'btc'
+};
+
+const CURRENCY_PRESETS = {
+  USDT: ['10', '50', '100', '250', '500'],
+  BTC: ['0.001', '0.005', '0.01', '0.05', '0.1'],
+  ETH: ['0.01', '0.05', '0.1', '0.5', '1'],
+  SOL: ['0.1', '0.5', '1', '5', '10'],
+  BNB: ['0.05', '0.1', '0.5', '1', '2']
+};
+
 export default function WalletPage({ onNavigate }) {
   const { user, loginWithWallet } = useAuth();
   const {
@@ -73,7 +89,7 @@ export default function WalletPage({ onNavigate }) {
   } = useWallet();
 
   const [activeTab, setActiveTab] = useState('deposit');
-  const [amount, setAmount] = useState('0.01');
+  const [amount, setAmount] = useState('50');
   const [status, setStatus] = useState(null);
   const [statusMessage, setStatusMessage] = useState('');
   const [balance, setBalanceState] = useState(getBalance());
@@ -86,10 +102,26 @@ export default function WalletPage({ onNavigate }) {
   const currentAssetBal = getBalance(targetCur);
   const curConfig = getCurrencyConfig(targetCur);
 
+  // Synchronize with active currency and balance updates
   useEffect(() => {
-    const handleUpdate = () => setBalanceState(getBalance(targetCur));
-    window.addEventListener('balance-update', handleUpdate);
-    return () => window.removeEventListener('balance-update', handleUpdate);
+    const syncActiveCurrency = () => {
+      const active = getActiveCurrency();
+      const mappedChain = CURRENCY_TO_CHAIN[active];
+      if (mappedChain && mappedChain !== selectedChain) {
+        setSelectedChain(mappedChain);
+      }
+      setBalanceState(getBalance(CHAIN_TO_CURRENCY[mappedChain || selectedChain] || 'USDT'));
+    };
+
+    syncActiveCurrency();
+    window.addEventListener('balance-update', syncActiveCurrency);
+    return () => window.removeEventListener('balance-update', syncActiveCurrency);
+  }, [selectedChain, setSelectedChain]);
+
+  // Adjust default amount when target currency changes
+  useEffect(() => {
+    const presets = CURRENCY_PRESETS[targetCur] || ['1', '5', '10', '25', '50'];
+    setAmount(presets[1] || presets[0]);
   }, [targetCur]);
 
   const connectWallet = async (walletId) => {
@@ -136,6 +168,30 @@ export default function WalletPage({ onNavigate }) {
       // Credit directly to specific asset balance immediately upon confirmation
       addToBalance(numAmount, targetCur);
       setBalanceState(getBalance(targetCur));
+
+      // Synchronize with authoritative server ledger & Firestore
+      try {
+        const { auth } = await import('../firebase');
+        const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+        if (token) {
+          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+          await fetch(`${apiUrl}/api/deposit/confirm`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              chain: selectedChain,
+              amount: numAmount,
+              txHash: hash,
+              currency: targetCur,
+            }),
+          });
+        }
+      } catch (backendErr) {
+        console.warn('Backend deposit confirmation notice:', backendErr.message);
+      }
 
       // Record tx
       addTx({
@@ -205,12 +261,17 @@ export default function WalletPage({ onNavigate }) {
               chain: selectedChain,
               amount: numAmount,
               toAddress: withdrawAddress,
+              currency: targetCur,
             }),
           });
 
           if (response.ok) {
             const data = await response.json();
             if (data?.txHash) txHash = data.txHash;
+            if (typeof data?.newBalance === 'number') {
+              setBalance(data.newBalance, targetCur);
+              setBalanceState(data.newBalance);
+            }
           }
         }
       } catch (backendErr) {
@@ -220,6 +281,7 @@ export default function WalletPage({ onNavigate }) {
       addTx({
         type: 'withdrawal',
         chain: selectedChain,
+        currency: targetCur,
         amount: numAmount,
         hash: txHash,
         timestamp: Date.now(),
@@ -399,13 +461,19 @@ export default function WalletPage({ onNavigate }) {
                       >
                         {Object.entries(ASSETS)
                           .filter(([key]) => {
+                            if (!connectedWallet) return true;
                             const wallet = WALLET_OPTIONS.find(w => w.id === connectedWallet);
-                            return wallet?.assets.includes(key);
+                            return wallet?.assets ? wallet.assets.includes(key) : true;
                           })
                           .map(([key, chain]) => (
                           <button
                             key={key}
-                            onClick={() => { setSelectedChain(key); setShowChainSelector(false); }}
+                            onClick={() => { 
+                              setSelectedChain(key); 
+                              const mapped = CHAIN_TO_CURRENCY[key];
+                              if (mapped) setActiveCurrency(mapped);
+                              setShowChainSelector(false); 
+                            }}
                             className={`w-full px-4 py-2.5 flex items-center gap-2.5 hover:bg-white/5 transition-colors ${selectedChain === key ? 'bg-white/5' : ''}`}
                           >
                             <span className="text-lg">{chain.icon}</span>
@@ -424,13 +492,24 @@ export default function WalletPage({ onNavigate }) {
 
               {/* Amount Input */}
               <div className="mb-5">
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                  {activeTab === 'deposit' ? 'Deposit' : 'Withdraw'} Amount ({chainConfig.symbol})
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                    {activeTab === 'deposit' ? 'Deposit' : 'Withdraw'} Amount ({chainConfig.symbol})
+                  </label>
+                  {activeTab === 'withdraw' && (
+                    <button
+                      type="button"
+                      onClick={() => setAmount(currentAssetBal.toString())}
+                      className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 uppercase tracking-wider transition-colors"
+                    >
+                      MAX ({currentAssetBal} {curConfig.symbol})
+                    </button>
+                  )}
+                </div>
                 <div className="relative">
                   <input
                     type="number"
-                    step="0.001"
+                    step="0.0001"
                     min="0"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
@@ -440,7 +519,7 @@ export default function WalletPage({ onNavigate }) {
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-xs">{chainConfig.symbol}</span>
                 </div>
                 <div className="flex gap-1.5 mt-2.5">
-                  {[0.01, 0.05, 0.1, 0.5, 1].map(val => (
+                  {(CURRENCY_PRESETS[targetCur] || ['1', '5', '10', '25', '50']).map(val => (
                     <button
                       key={val}
                       onClick={() => setAmount(val.toString())}
@@ -560,9 +639,9 @@ export default function WalletPage({ onNavigate }) {
                       <Check className="w-7 h-7 text-gray-950" strokeWidth={3} />
                     </div>
                     <p className="font-bold text-base text-emerald-400 text-center">{statusMessage}</p>
-                    {txHash && (
+                    {txHash && ASSETS[selectedChain]?.explorerUrl && (
                       <a
-                        href={`${CHAINS[selectedChain].explorerUrl}/tx/${txHash}`}
+                        href={`${ASSETS[selectedChain].explorerUrl}/tx/${txHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-1.5 text-xs text-blue-400 hover:underline"
