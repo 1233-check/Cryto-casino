@@ -432,35 +432,35 @@ export default function CrashGame({ onBack }) {
 
   return (
     <GameLayout title="Crash" balance={balance} onBack={onBack} controls={controls}>
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0F212E] to-[#1A2C38]/50" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0B0D11] to-[#14171F]/50" />
       <div className="absolute inset-0" ref={canvasRef} />
       
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 p-4 text-center">
         {gamePhase === 'WAITING' && (
           <>
-            <span className="text-5xl font-display font-black text-white drop-shadow-2xl">
+            <span className="text-3xl sm:text-5xl font-display font-black text-white drop-shadow-lg">
               Preparing...
             </span>
-            <span className="text-2xl text-[#B1BAD3] font-bold mt-2">
+            <span className="text-base sm:text-2xl text-slate-300 font-semibold mt-1 sm:mt-2">
               Starting in {(remainingTimeUI / 1000).toFixed(1)}s
             </span>
           </>
         )}
         {gamePhase === 'RUNNING' && (
-          <span className="text-7xl font-display font-black text-white drop-shadow-2xl">
+          <span className="text-5xl sm:text-7xl font-display font-black text-white drop-shadow-xl tabular-nums">
             {currentMultUI.toFixed(2)}x
           </span>
         )}
         {gamePhase === 'CRASHED' && (
           <>
-            <span className="text-7xl font-display font-black text-[#FF3B30] drop-shadow-2xl">
+            <span className="text-5xl sm:text-7xl font-display font-black text-rose-500 drop-shadow-xl tabular-nums">
               {currentMultUI.toFixed(2)}x
             </span>
-            <span className="text-[#FF3B30] font-bold text-2xl mt-2">Crashed!</span>
+            <span className="text-rose-400 font-bold text-xl sm:text-2xl mt-1 sm:mt-2">Crashed!</span>
           </>
         )}
         {betState === 'cashed_out' && gamePhase === 'RUNNING' && (
-          <span className="text-[#00E701] font-bold text-xl mt-4">
+          <span className="text-emerald-400 font-bold text-base sm:text-xl mt-2 sm:mt-4 bg-emerald-500/10 border border-emerald-500/30 px-4 py-1.5 rounded-full">
             Cashed out! +{lastWin.toFixed(2)}
           </span>
         )}

@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import GameGrid from './components/GameGrid';
 import AIChatWidget from './components/AIChatWidget';
+import MobileBottomNav from './components/MobileBottomNav';
 import { AuthProvider } from './context/AuthContext';
 import { WalletProvider } from './context/WalletContext';
 
@@ -135,7 +136,7 @@ function App() {
   return (
     <AuthProvider>
       <WalletProvider>
-        <div className="flex h-screen bg-[#0F212E] text-white overflow-hidden font-sans">
+        <div className="flex h-screen bg-[#0B0D11] text-white overflow-hidden font-sans">
           {!isAuthView && (
             <Sidebar 
               activeView={activeView} 
@@ -144,16 +145,24 @@ function App() {
               onCloseMobile={() => setMobileSidebarOpen(false)}
             />
           )}
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 flex flex-col min-w-0 relative">
             {!isAuthView && (
               <Navbar 
                 onNavigate={setActiveView} 
                 onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
               />
             )}
-            <main className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar relative">
+            <main className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 pb-20 md:pb-6 custom-scrollbar relative">
               {renderContent()}
             </main>
+
+            {!isAuthView && (
+              <MobileBottomNav 
+                activeView={activeView} 
+                setActiveView={setActiveView} 
+                onToggleSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)} 
+              />
+            )}
           </div>
           {!isAuthView && <AIChatWidget />}
         </div>

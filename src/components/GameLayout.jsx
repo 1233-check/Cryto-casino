@@ -6,52 +6,52 @@ export default function GameLayout({ title, onBack, children, controls }) {
   const [showFairness, setShowFairness] = useState(false);
 
   return (
-    <div className="h-[100dvh] flex flex-col gap-2 p-2 md:p-3.5 max-w-[1400px] mx-auto w-full overflow-hidden">
+    <div className="min-h-full md:h-full flex flex-col gap-2 p-1 sm:p-2 md:p-3.5 max-w-[1400px] mx-auto w-full">
       
       {/* Universal Header (Top for both Mobile and Desktop) */}
-      <div className="bg-[#14171F] rounded-xl flex items-center justify-between p-3 border border-white/[0.07] shadow-sm shrink-0 z-20">
-          <div className="flex items-center gap-3">
-            <button onClick={onBack} className="text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-lg hover:bg-white/10 active:scale-95">
+      <div className="bg-[#14171F] rounded-xl flex items-center justify-between p-2.5 sm:p-3 border border-white/[0.07] shadow-sm shrink-0 z-20">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <button onClick={onBack} className="text-slate-400 hover:text-white transition-colors bg-white/5 p-1.5 sm:p-2 rounded-lg hover:bg-white/10 active:scale-95">
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <h2 className="text-base font-bold tracking-tight text-white">{title}</h2>
+            <h2 className="text-sm sm:text-base font-bold tracking-tight text-white">{title}</h2>
           </div>
           <button 
             onClick={() => setMuted(!muted)}
-            className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10 active:scale-95"
+            className="text-slate-400 hover:text-white transition-colors p-1.5 sm:p-2 rounded-lg hover:bg-white/10 active:scale-95"
           >
             {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
       </div>
       
       {/* Main Content Area (Controls below game on Mobile, beside game on Desktop) */}
-      <div className="flex-1 flex flex-col-reverse md:flex-row gap-2 md:gap-3.5 overflow-y-auto md:overflow-hidden custom-scrollbar pb-10 md:pb-0">
+      <div className="flex-1 flex flex-col-reverse md:flex-row gap-2 md:gap-3.5 pb-6 md:pb-0 md:overflow-hidden">
         
         {/* Sidebar Controls */}
         <div className="w-full md:w-80 bg-[#14171F] rounded-xl md:rounded-2xl flex flex-col shrink-0 shadow-md border border-white/[0.07] h-auto md:h-full z-10">
-          <div className="flex-1 flex flex-col p-3.5 custom-scrollbar md:overflow-y-auto">
+          <div className="flex-1 flex flex-col p-3 sm:p-3.5 custom-scrollbar md:overflow-y-auto">
             {controls}
           </div>
         </div>
 
         {/* Main Game Area */}
-        <div className="flex-1 flex flex-col gap-2 md:gap-3.5 h-full md:overflow-hidden">
+        <div className="flex-1 flex flex-col gap-2 md:gap-3.5 md:h-full md:overflow-hidden">
           
           {/* Game Canvas / Board */}
-          <div className="flex-1 bg-[#10131A] rounded-xl md:rounded-2xl relative overflow-hidden shadow-md flex flex-col min-h-[350px] md:min-h-[500px] border border-white/[0.07] z-10">
+          <div className="flex-1 bg-[#10131A] rounded-xl md:rounded-2xl relative overflow-hidden shadow-md flex flex-col min-h-[260px] sm:min-h-[320px] md:min-h-[480px] border border-white/[0.07] z-10">
             {/* Top Bar for Game Area */}
-            <div className="absolute top-0 left-0 right-0 p-3 md:p-3.5 flex justify-between items-start pointer-events-none z-20">
-               <div className="bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/[0.08] pointer-events-auto shadow-sm">
-                 <span className="text-[10px] md:text-xs font-semibold text-white tracking-wider uppercase flex items-center gap-2">
+            <div className="absolute top-0 left-0 right-0 p-2.5 sm:p-3.5 flex justify-between items-start pointer-events-none z-20">
+               <div className="bg-black/40 backdrop-blur-md px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border border-white/[0.08] pointer-events-auto shadow-sm">
+                 <span className="text-[10px] md:text-xs font-semibold text-white tracking-wider uppercase flex items-center gap-1.5 sm:gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                     Live
                  </span>
                </div>
                <div className="flex gap-1.5 pointer-events-auto">
-                 <button className="bg-black/40 backdrop-blur-md p-2 rounded-lg border border-white/[0.08] text-white/60 hover:text-white hover:bg-white/10 transition-all shadow-sm active:scale-95">
-                    <BarChart3 className="w-4 h-4" />
+                 <button className="bg-black/40 backdrop-blur-md p-1.5 sm:p-2 rounded-lg border border-white/[0.08] text-white/60 hover:text-white hover:bg-white/10 transition-all shadow-sm active:scale-95">
+                    <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                  </button>
-                 <button className="bg-black/40 backdrop-blur-md p-2 rounded-lg border border-white/[0.08] text-white/60 hover:text-white hover:bg-white/10 transition-all shadow-sm active:scale-95 hidden md:block">
+                 <button className="bg-black/40 backdrop-blur-md p-1.5 sm:p-2 rounded-lg border border-white/[0.08] text-white/60 hover:text-white hover:bg-white/10 transition-all shadow-sm active:scale-95 hidden md:block">
                     <Maximize2 className="w-4 h-4" />
                  </button>
                </div>
@@ -63,21 +63,21 @@ export default function GameLayout({ title, onBack, children, controls }) {
           </div>
 
           {/* Footer Utilities */}
-          <div className="h-12 md:h-13 bg-[#14171F] rounded-xl border border-white/[0.07] flex items-center justify-between px-3 md:px-4 shadow-sm shrink-0 overflow-x-auto custom-scrollbar gap-4 z-10">
+          <div className="h-auto py-2 md:h-12 bg-[#14171F] rounded-xl border border-white/[0.07] flex items-center justify-between px-3 md:px-4 shadow-sm shrink-0 flex-wrap gap-2 z-10">
              <button 
                onClick={() => setShowFairness(!showFairness)}
-               className="flex items-center gap-2 text-[11px] font-semibold text-slate-300 hover:text-white transition-colors bg-[#10131A] px-3 py-1.5 rounded-lg border border-white/[0.07] hover:border-white/20 whitespace-nowrap active:scale-95"
+               className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] font-semibold text-slate-300 hover:text-white transition-colors bg-[#10131A] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-white/[0.07] hover:border-white/20 whitespace-nowrap active:scale-95"
              >
                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                Provably Fair
              </button>
              
-             <div className="flex items-center gap-4 md:gap-5 text-[11px] font-medium uppercase tracking-wider text-slate-400">
-                <div className="flex items-center gap-1.5 whitespace-nowrap">
+             <div className="flex items-center gap-3 sm:gap-5 text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                <div className="flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
                    <span>Edge:</span>
                    <span className="text-slate-300 font-semibold">1.00%</span>
                 </div>
-                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                <div className="flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
                    <span>Max Win:</span>
                    <span className="text-slate-300 font-semibold">$1,000,000</span>
                 </div>

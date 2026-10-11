@@ -105,35 +105,35 @@ export default function GameGrid({ onSelectGame }) {
     <div className="max-w-[1440px] mx-auto w-full space-y-6 pb-12">
       
       {/* Matte Editorial Hero Banner */}
-      <div className="relative rounded-2xl overflow-hidden bg-[#12151D] border border-white/[0.07] p-6 sm:p-8 shadow-md">
-        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+      <div className="relative rounded-2xl overflow-hidden bg-[#12151D] border border-white/[0.07] p-4 sm:p-8 shadow-md">
+        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 sm:gap-6">
           <div className="max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-slate-300 text-xs font-medium mb-3">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Provably Fair Crypto Gaming • 99% Theoretical RTP</span>
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-slate-300 text-[11px] sm:text-xs font-medium mb-2.5 sm:mb-3">
+              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400" />
+              <span>Provably Fair Gaming • 99% Theoretical RTP</span>
             </div>
             
-            <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight mb-2.5">
-              Verified Odds. Instant Payouts. <br />
+            <h1 className="text-xl sm:text-4xl font-bold tracking-tight text-white leading-snug sm:leading-tight mb-2 sm:mb-2.5">
+              Verified Odds. Instant Payouts. <br className="hidden sm:inline" />
               <span className="text-slate-400 font-normal">Non-custodial gaming on your terms.</span>
             </h1>
             
-            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed mb-5">
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed mb-4 sm:mb-5">
               15 high-speed crypto titles with SHA-256 cryptographic provable fairness, multi-currency balances, and immediate zero-fee settlement.
             </p>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <button 
                 onClick={() => onSelectGame('crash')}
-                className="px-5 py-2.5 bg-[#10B981] hover:bg-[#059669] text-gray-950 font-bold text-xs rounded-xl transition-all shadow-sm hover:-translate-y-0.5 flex items-center gap-2"
+                className="px-4 sm:px-5 py-2 sm:py-2.5 bg-[#10B981] hover:bg-[#059669] text-gray-950 font-bold text-xs rounded-xl transition-all shadow-sm hover:-translate-y-0.5 flex items-center gap-1.5 sm:gap-2"
               >
-                <Flame className="w-4 h-4 fill-gray-950" />
+                <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-gray-950" />
                 <span>Play Crash</span>
               </button>
               
               <button 
                 onClick={() => onSelectGame('plinko')}
-                className="px-5 py-2.5 bg-white/[0.06] hover:bg-white/[0.1] text-white font-medium text-xs rounded-xl border border-white/[0.08] transition-all hover:-translate-y-0.5 flex items-center gap-2"
+                className="px-4 sm:px-5 py-2 sm:py-2.5 bg-white/[0.06] hover:bg-white/[0.1] text-white font-medium text-xs rounded-xl border border-white/[0.08] transition-all hover:-translate-y-0.5 flex items-center gap-1.5 sm:gap-2"
               >
                 <Play className="w-3.5 h-3.5 fill-white" />
                 <span>Explore Plinko</span>
@@ -142,22 +142,22 @@ export default function GameGrid({ onSelectGame }) {
           </div>
 
           {/* Clean Quick Stats (Matte Charcoal Cards) */}
-          <div className="grid grid-cols-2 gap-2.5 w-full lg:w-auto">
-            <div className="bg-[#171A23] p-3.5 rounded-xl border border-white/[0.06] text-center min-w-[125px]">
-              <div className="text-xl font-bold font-mono text-emerald-400">99.00%</div>
-              <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Highest RTP</div>
+          <div className="grid grid-cols-2 gap-2 sm:gap-2.5 w-full lg:w-auto">
+            <div className="bg-[#171A23] p-2.5 sm:p-3.5 rounded-xl border border-white/[0.06] text-center min-w-[110px] sm:min-w-[125px]">
+              <div className="text-lg sm:text-xl font-bold font-mono text-emerald-400">99.00%</div>
+              <div className="text-[9px] sm:text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Highest RTP</div>
             </div>
-            <div className="bg-[#171A23] p-3.5 rounded-xl border border-white/[0.06] text-center min-w-[125px]">
-              <div className="text-xl font-bold font-mono text-blue-400">15</div>
-              <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Casino Titles</div>
+            <div className="bg-[#171A23] p-2.5 sm:p-3.5 rounded-xl border border-white/[0.06] text-center min-w-[110px] sm:min-w-[125px]">
+              <div className="text-lg sm:text-xl font-bold font-mono text-blue-400">15</div>
+              <div className="text-[9px] sm:text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Casino Titles</div>
             </div>
-            <div className="bg-[#171A23] p-3.5 rounded-xl border border-white/[0.06] text-center min-w-[125px]">
-              <div className="text-xl font-bold font-mono text-amber-400">0 Sec</div>
-              <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Instant Payouts</div>
+            <div className="bg-[#171A23] p-2.5 sm:p-3.5 rounded-xl border border-white/[0.06] text-center min-w-[110px] sm:min-w-[125px]">
+              <div className="text-lg sm:text-xl font-bold font-mono text-amber-400">0 Sec</div>
+              <div className="text-[9px] sm:text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Instant Payouts</div>
             </div>
-            <div className="bg-[#171A23] p-3.5 rounded-xl border border-white/[0.06] text-center min-w-[125px]">
-              <div className="text-xl font-bold font-mono text-slate-200">100%</div>
-              <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Provably Fair</div>
+            <div className="bg-[#171A23] p-2.5 sm:p-3.5 rounded-xl border border-white/[0.06] text-center min-w-[110px] sm:min-w-[125px]">
+              <div className="text-lg sm:text-xl font-bold font-mono text-slate-200">100%</div>
+              <div className="text-[9px] sm:text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">Provably Fair</div>
             </div>
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function GameGrid({ onSelectGame }) {
       </div>
 
       {/* Game Cards Grid (High-Quality Artwork Covers) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
         {filteredGames.map(game => (
           <motion.div
             key={game.id}

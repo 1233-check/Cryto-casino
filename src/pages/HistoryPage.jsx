@@ -26,12 +26,12 @@ export default function HistoryPage({ onNavigate }) {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[#10131A] border-b border-white/[0.06] text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-                <th className="p-3.5">Game</th>
-                <th className="p-3.5">Time</th>
-                <th className="p-3.5">Bet</th>
-                <th className="p-3.5">Multiplier</th>
-                <th className="p-3.5">Payout</th>
-                <th className="p-3.5 text-right">Profit / Loss</th>
+                <th className="p-3 sm:p-3.5">Game</th>
+                <th className="p-3 sm:p-3.5 hidden sm:table-cell">Time</th>
+                <th className="p-3 sm:p-3.5">Bet</th>
+                <th className="p-3 sm:p-3.5">Multi</th>
+                <th className="p-3 sm:p-3.5 hidden md:table-cell">Payout</th>
+                <th className="p-3 sm:p-3.5 text-right">Profit / Loss</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.04] text-xs font-mono">
@@ -44,22 +44,22 @@ export default function HistoryPage({ onNavigate }) {
               ) : (
                 history.map((entry, idx) => (
                   <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="p-3.5 font-sans font-medium text-white capitalize">
+                    <td className="p-3 sm:p-3.5 font-sans font-medium text-white capitalize text-xs">
                       {entry.game}
                     </td>
-                    <td className="p-3.5 text-slate-500 text-[11px]">
-                      {format(new Date(entry.timestamp), 'MMM d, HH:mm:ss')}
+                    <td className="p-3 sm:p-3.5 text-slate-500 text-[11px] hidden sm:table-cell">
+                      {format(new Date(entry.timestamp), 'MMM d, HH:mm')}
                     </td>
-                    <td className="p-3.5 text-slate-300">
+                    <td className="p-3 sm:p-3.5 text-slate-300">
                       {entry.bet.toFixed(4)}
                     </td>
-                    <td className="p-3.5 font-semibold text-white">
+                    <td className="p-3 sm:p-3.5 font-semibold text-white">
                       {entry.multiplier > 0 ? `${entry.multiplier}x` : '0.00x'}
                     </td>
-                    <td className="p-3.5 text-slate-300">
+                    <td className="p-3 sm:p-3.5 text-slate-300 hidden md:table-cell">
                       {entry.payout.toFixed(4)}
                     </td>
-                    <td className="p-3.5 text-right font-semibold">
+                    <td className="p-3 sm:p-3.5 text-right font-semibold">
                       <span className={entry.profit > 0 ? 'text-emerald-400' : entry.profit < 0 ? 'text-rose-400' : 'text-slate-400'}>
                         {entry.profit > 0 ? '+' : ''}{entry.profit.toFixed(4)}
                       </span>

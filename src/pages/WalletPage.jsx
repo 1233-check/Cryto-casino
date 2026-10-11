@@ -253,20 +253,20 @@ export default function WalletPage({ onNavigate }) {
     <div className="flex flex-col h-full bg-[#0B0D11] text-white p-4 sm:p-6 w-full max-w-5xl mx-auto">
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <Wallet className="w-6 h-6 text-emerald-400" />
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
+            <Wallet className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
             Wallet &amp; Vault
           </h1>
           <p className="text-slate-400 text-xs mt-0.5">Deposit and withdraw crypto across multi-chain settlement rails</p>
         </div>
-        <div className="bg-[#14171F] px-5 py-2.5 rounded-xl border border-white/[0.07] shadow-sm flex flex-col items-end">
+        <div className="bg-[#14171F] px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl border border-white/[0.07] shadow-sm flex items-center justify-between sm:flex-col sm:items-end">
           <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mb-0.5">
             {targetCur} Balance
           </span>
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold text-white tabular-nums">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="text-lg sm:text-xl font-bold text-white tabular-nums">
               {currentAssetBal.toLocaleString(undefined, { 
                 minimumFractionDigits: curConfig.decimals > 2 ? curConfig.decimals : 2, 
                 maximumFractionDigits: curConfig.decimals 
@@ -282,7 +282,7 @@ export default function WalletPage({ onNavigate }) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[#14171F] border border-emerald-500/20 rounded-xl px-4 py-2.5 mb-5 flex items-center justify-between"
+          className="bg-[#14171F] border border-emerald-500/20 rounded-xl px-3.5 sm:px-4 py-2.5 mb-5 flex flex-wrap items-center justify-between gap-2"
         >
           <div className="flex items-center gap-2.5">
             <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse" />
@@ -302,10 +302,10 @@ export default function WalletPage({ onNavigate }) {
       )}
 
       {/* Tab Buttons */}
-      <div className="flex gap-2 mb-5">
+      <div className="flex gap-2 mb-5 w-full sm:w-auto">
         <button
           onClick={() => setActiveTab('deposit')}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-xs transition-all ${
+          className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-xs transition-all ${
             activeTab === 'deposit'
               ? 'bg-[#10B981] text-gray-950 shadow-sm'
               : 'bg-[#14171F] text-slate-400 hover:bg-[#1A1E27] hover:text-white border border-white/[0.06]'
@@ -316,7 +316,7 @@ export default function WalletPage({ onNavigate }) {
         </button>
         <button
           onClick={() => setActiveTab('withdraw')}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-xs transition-all ${
+          className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-xs transition-all ${
             activeTab === 'withdraw'
               ? 'bg-white/10 text-white border border-white/[0.12] shadow-sm'
               : 'bg-[#14171F] text-slate-400 hover:bg-[#1A1E27] hover:text-white border border-white/[0.06]'
